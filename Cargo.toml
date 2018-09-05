@@ -1,0 +1,6 @@
+[package]
+name = "moon-rs"
+version = "0.1.0"
+authors = ["Leonardo Souza <leonardostsouza@gmail.com>"]
+
+[dependencies]
