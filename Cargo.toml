@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["Leonardo Souza <leonardostsouza@gmail.com>"]
 
 [dependencies]
+gtk = "0.4.1"
+gio = "0.4.1"
