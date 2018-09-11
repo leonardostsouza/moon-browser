@@ -3,11 +3,15 @@
 // interface using GTK
 
 extern crate gio;
-use gui::gio::prelude::*;
+use gio::prelude::*;
 
 extern crate gtk;
 use gtk::prelude::*;
-use gtk::{Menu, MenuBar, MenuItem, MenuItemExt, Application, ApplicationWindow, AboutDialog};
+use gtk::{Menu, MenuBar, MenuItem, MenuItemExt, Application, ApplicationWindow,
+    AboutDialog, Inhibit, ObjectExt, WidgetExt, traits::*};
+
+extern crate glib;
+
 
 // make moving clones into closures more convenient
 macro_rules! clone {
@@ -27,29 +31,31 @@ macro_rules! clone {
     );
 }
 
-pub fn build_ui(application: &gtk::Application) {
+pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
     let window = gtk::ApplicationWindow::new(application);
 
     window.set_title("Moon-rs Browser");
     window.set_position(gtk::WindowPosition::Center);
-    window.set_default_size(800, 600);
+    window.set_default_size(width, height);
 
     window.connect_delete_event(clone!(window => move |_, _| {
         window.destroy();
         Inhibit(false)
     }));
 
-    build_menu(&window);
-    build_address_bar(&window);
-    build_text_box(&window);
+    let v_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
+
+    build_menu_bar(&window, &v_box);
+    build_drawing_area(&window, &v_box, width, height);
+    build_address_bar(&window, &v_box);
+
+    window.add(&v_box);
 
     window.show_all();
 }
 
 
-fn build_menu(window: &gtk::ApplicationWindow) {
-    let v_box = gtk::Box::new(gtk::Orientation::Vertical, 10);
-
+fn build_menu_bar(window: &gtk::ApplicationWindow, v_box: &gtk::Box) {
     let menu_bar = MenuBar::new();
     let file_menu = Menu::new();
     let file = MenuItem::new_with_label("File");
@@ -67,7 +73,6 @@ fn build_menu(window: &gtk::ApplicationWindow) {
     menu_bar.append(&file);
 
     v_box.pack_start(&menu_bar, false, false, 0);
-    window.add(&v_box);
 
     // Menu Item Functionality
     about.connect_activate(move |_| {
@@ -86,10 +91,35 @@ fn build_menu(window: &gtk::ApplicationWindow) {
     }));
 }
 
-fn build_address_bar(window: &gtk::ApplicationWindow) {
-    println!("build_address_bar");
+fn build_address_bar(window: &gtk::ApplicationWindow, v_box: &gtk::Box) {
+    //println!("build_address_bar");
+    let entry = gtk::Entry::new();
+    v_box.pack_start(&entry, false, false, 0);
+
+    entry.connect_activate(clone!(entry => move |_| {
+            let url = entry.get_text().unwrap();
+            println!("URL: {}", url);
+            // TODO: GET IPFS WEBPAGE HERE
+    }));
 }
 
-fn build_text_box(window: &gtk::ApplicationWindow) {
-    println!("build_text_box");
+fn build_drawing_area(window: &gtk::ApplicationWindow, v_box: &gtk::Box, width: i32, height: i32) {
+    println!("build_drawing_area");
+    let drawing_area = gtk::DrawingArea::new();
+    drawing_area.set_size_request(width, height);
+
+    let layout = gtk::Layout::new(None, None);
+
+    let overlay = gtk::Overlay::new();
+    {
+        use gtk::OverlayExt;
+        overlay.add_overlay(&drawing_area);
+        overlay.set_child_index(&drawing_area, 0);
+        overlay.add_overlay(&layout);
+        overlay.set_child_index(&layout, 1);
+    }
+
+    let scrolled_window = gtk::ScrolledWindow::new(None, None);
+    scrolled_window.add(&overlay);
+    v_box.pack_end(&scrolled_window, true, true, 0);
 }
