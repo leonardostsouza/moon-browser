@@ -12,6 +12,10 @@ use gtk::{Menu, MenuBar, MenuItem, MenuItemExt, Application, ApplicationWindow,
 
 extern crate glib;
 
+// TODO: transfer this include to a custom module
+extern crate ipfsapi;
+use self::ipfsapi::IpfsApi;
+
 
 // make moving clones into closures more convenient
 macro_rules! clone {
@@ -97,9 +101,15 @@ fn build_address_bar(window: &gtk::ApplicationWindow, v_box: &gtk::Box) {
     v_box.pack_start(&entry, false, false, 0);
 
     entry.connect_activate(clone!(entry => move |_| {
-            let url = entry.get_text().unwrap();
-            println!("URL: {}", url);
-            // TODO: GET IPFS WEBPAGE HERE
+            let hash = entry.get_text().unwrap();
+            println!("HASH: {}", hash);
+            // TODO: transfer this code to another module
+            let api = IpfsApi::new("127.0.0.1", 5001);
+
+            let bytes = api.block_get(&hash).unwrap();
+            let data = String::from_utf8(bytes.collect()).unwrap();
+
+            println!("{}", data);
     }));
 }
 

@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Leonardo Souza <leonardostsouza@gmail.com>"]
 
 [dependencies]
+# GTK
 chrono = "0.4"
 glib = "^0"
 gio = "^0"
@@ -12,6 +13,9 @@ gdk-pixbuf = "^0"
 gtk = "^0"
 pango = "^0"
 cairo-rs = { version = "^0", features = ["png"] }
+
+# IPFS API
+ipfsapi = "^0"
 
 [features]
 #default = ["gtk_3_22"]
