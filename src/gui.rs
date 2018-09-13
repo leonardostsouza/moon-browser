@@ -48,10 +48,16 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
     }));
 
     let v_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    //let drawing_area = gtk::DrawingArea::new();
+    // Changed drawing_area to TextView for testing purposes.
+    // TODO: Change type back to DrawingArea when HTML interpreter is implemented
+    let drawing_area = gtk::TextView::new();
+    drawing_area.set_size_request(width, height);
+    v_box.pack_end(&drawing_area, true, true, 0);
 
     build_menu_bar(&window, &v_box);
-    build_drawing_area(&window, &v_box, width, height);
-    build_address_bar(&window, &v_box);
+    build_drawing_area(&window, &v_box, &drawing_area);
+    build_address_bar(&window, &v_box, &drawing_area);
 
     window.add(&v_box);
 
@@ -95,12 +101,31 @@ fn build_menu_bar(window: &gtk::ApplicationWindow, v_box: &gtk::Box) {
     }));
 }
 
-fn build_address_bar(window: &gtk::ApplicationWindow, v_box: &gtk::Box) {
+fn build_drawing_area(window: &gtk::ApplicationWindow, v_box: &gtk::Box, drawing_area: &gtk::TextView) {
+    println!("build_drawing_area");
+
+    //let layout = gtk::Layout::new(None, None);
+
+    /*let overlay = gtk::Overlay::new();
+    {
+        use gtk::OverlayExt;
+        overlay.add_overlay(&drawing_area);
+        overlay.set_child_index(&drawing_area, 0);
+        overlay.add_overlay(&layout);
+        overlay.set_child_index(&layout, 1);
+    }*/
+
+    /*let scrolled_window = gtk::ScrolledWindow::new(None, None);
+    scrolled_window.add(&overlay);
+    v_box.pack_end(&scrolled_window, true, true, 0);*/
+}
+
+fn build_address_bar(window: &gtk::ApplicationWindow, v_box: &gtk::Box, drawing_area: &gtk::TextView) {
     //println!("build_address_bar");
     let entry = gtk::Entry::new();
     v_box.pack_start(&entry, false, false, 0);
 
-    entry.connect_activate(clone!(entry => move |_| {
+    entry.connect_activate(clone!(drawing_area, entry => move |_| {
             let hash = entry.get_text().unwrap();
             println!("HASH: {}", hash);
             // TODO: transfer this code to another module
@@ -110,26 +135,7 @@ fn build_address_bar(window: &gtk::ApplicationWindow, v_box: &gtk::Box) {
             let data = String::from_utf8(bytes.collect()).unwrap();
 
             println!("{}", data);
+            drawing_area.get_buffer().expect("Error while loading text buffer")
+                                     .set_text(&data);
     }));
-}
-
-fn build_drawing_area(window: &gtk::ApplicationWindow, v_box: &gtk::Box, width: i32, height: i32) {
-    println!("build_drawing_area");
-    let drawing_area = gtk::DrawingArea::new();
-    drawing_area.set_size_request(width, height);
-
-    let layout = gtk::Layout::new(None, None);
-
-    let overlay = gtk::Overlay::new();
-    {
-        use gtk::OverlayExt;
-        overlay.add_overlay(&drawing_area);
-        overlay.set_child_index(&drawing_area, 0);
-        overlay.add_overlay(&layout);
-        overlay.set_child_index(&layout, 1);
-    }
-
-    let scrolled_window = gtk::ScrolledWindow::new(None, None);
-    scrolled_window.add(&overlay);
-    v_box.pack_end(&scrolled_window, true, true, 0);
 }
