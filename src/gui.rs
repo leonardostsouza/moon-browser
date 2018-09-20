@@ -7,8 +7,7 @@ use gio::prelude::*;
 
 extern crate gtk;
 use gtk::prelude::*;
-use gtk::{Menu, MenuBar, MenuItem, MenuItemExt, Application, ApplicationWindow,
-    AboutDialog, Inhibit, ObjectExt, WidgetExt, traits::*};
+use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
 
 extern crate glib;
 
@@ -35,95 +34,107 @@ macro_rules! clone {
     );
 }
 
+fn object<T: IsA<Object>>(builder: &gtk::Builder, name: &str) -> T {
+    builder.get_object(name).expect(&format!("Failed to get {}", name)[..])
+}
+
 pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
-    let window = gtk::ApplicationWindow::new(application);
+    let glade_src = include_str!("gui.glade");
+    let builder = Builder::new_from_string(glade_src);
 
-    window.set_title("Moon-rs Browser");
-    window.set_position(gtk::WindowPosition::Center);
+    let window: ApplicationWindow = object(&builder, "applicationwindow1");
     window.set_default_size(width, height);
-
+    window.set_application(application);
     window.connect_delete_event(clone!(window => move |_, _| {
         window.destroy();
         Inhibit(false)
     }));
 
-    let v_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
-    //let drawing_area = gtk::DrawingArea::new();
     // Changed drawing_area to TextView for testing purposes.
-    // TODO: Change type back to DrawingArea when HTML interpreter is implemented
-    let drawing_area = gtk::TextView::new();
-    drawing_area.set_size_request(width, height);
-    v_box.pack_end(&drawing_area, true, true, 0);
+    // TODO: Change type back to gtk::DrawingArea when HTML interpreter is implemented
+    let drawing_area: gtk::TextView = object(&builder, "textview1");
 
-    build_menu_bar(&window, &v_box);
-    build_drawing_area(&window, &v_box, &drawing_area);
-    build_address_bar(&window, &v_box, &drawing_area);
-
-    window.add(&v_box);
+    build_menu_bar(&builder, &window);
+    build_drawing_area(&builder, &drawing_area);
+    build_address_bar(&builder, &drawing_area);
 
     window.show_all();
 }
 
 
-fn build_menu_bar(window: &gtk::ApplicationWindow, v_box: &gtk::Box) {
-    let menu_bar = MenuBar::new();
-    let file_menu = Menu::new();
-    let file = MenuItem::new_with_label("File");
-    let new = MenuItem::new_with_label("New");
-    let open = MenuItem::new_with_label("Open");
-    let about = MenuItem::new_with_label("About");
-    let quit = MenuItem::new_with_label("Quit");
+fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
+    let not_impl_dialog: gtk::MessageDialog = object(&builder, "messagedialog1");
 
-    file_menu.append(&new);
-    file_menu.append(&open);
-    file_menu.append(&about);
-    file_menu.append(&quit);
+    // File
+    let new: gtk::ImageMenuItem = object(&builder, "imagemenuitem1");
+    new.connect_activate(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
 
-    file.set_submenu(Some(&file_menu));
-    menu_bar.append(&file);
+    let open: gtk::ImageMenuItem = object(&builder, "imagemenuitem2");
+    open.connect_activate(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
 
-    v_box.pack_start(&menu_bar, false, false, 0);
+    let save: gtk::ImageMenuItem = object(&builder, "imagemenuitem3");
+    save.connect_activate(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
 
-    // Menu Item Functionality
-    about.connect_activate(move |_| {
-        let p = AboutDialog::new();
-        p.set_authors(&["Ethereum Foundation"]);
-        p.set_website_label(Some("Ethereum Foundation"));
-        p.set_website(Some("http://ethereum.org"));
-        p.set_title("About");
-        //p.set_transient_for(Some(window)); // <==== This is giving an error. Investigate
-        p.run();
-        p.destroy();
-    });
+    let save_as: gtk::ImageMenuItem = object(&builder, "imagemenuitem4");
+    save_as.connect_activate(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
 
+    let quit: gtk::ImageMenuItem = object(&builder, "imagemenuitem5");
     quit.connect_activate(clone!(window => move |_| {
         window.destroy()
     }));
+
+
+    // Edit
+    let cut: gtk::ImageMenuItem = object(&builder, "imagemenuitem6");
+    cut.connect_activate(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
+
+    let copy: gtk::ImageMenuItem = object(&builder, "imagemenuitem7");
+    copy.connect_activate(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
+
+    let paste: gtk::ImageMenuItem = object(&builder, "imagemenuitem8");
+    paste.connect_activate(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
+
+
+    // Tools
+    // -- Nothing here yet
+
+
+    // Help
+    let about_dialog: gtk::AboutDialog = object(&builder, "aboutdialog1");
+    let about: gtk::ImageMenuItem = object(&builder, "imagemenuitem9");
+    about.connect_activate(move |_| {
+        about_dialog.run();
+        about_dialog.hide();
+    });
 }
 
-fn build_drawing_area(window: &gtk::ApplicationWindow, v_box: &gtk::Box, drawing_area: &gtk::TextView) {
+fn build_drawing_area(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
     println!("build_drawing_area");
-
-    //let layout = gtk::Layout::new(None, None);
-
-    /*let overlay = gtk::Overlay::new();
-    {
-        use gtk::OverlayExt;
-        overlay.add_overlay(&drawing_area);
-        overlay.set_child_index(&drawing_area, 0);
-        overlay.add_overlay(&layout);
-        overlay.set_child_index(&layout, 1);
-    }*/
-
-    /*let scrolled_window = gtk::ScrolledWindow::new(None, None);
-    scrolled_window.add(&overlay);
-    v_box.pack_end(&scrolled_window, true, true, 0);*/
 }
 
-fn build_address_bar(window: &gtk::ApplicationWindow, v_box: &gtk::Box, drawing_area: &gtk::TextView) {
-    //println!("build_address_bar");
-    let entry = gtk::Entry::new();
-    v_box.pack_start(&entry, false, false, 0);
+fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
+    let entry: gtk::Entry = object(&builder, "entry1");
 
     entry.connect_activate(clone!(drawing_area, entry => move |_| {
             let hash = entry.get_text().unwrap();
