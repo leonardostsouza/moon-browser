@@ -63,7 +63,7 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
 
 
 fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
-    let not_impl_dialog: gtk::MessageDialog = object(&builder, "messagedialog1");
+    let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
 
     // File
     let new: gtk::ImageMenuItem = object(&builder, "imagemenuitem1");
@@ -134,19 +134,59 @@ fn build_drawing_area(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
 }
 
 fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
-    let entry: gtk::Entry = object(&builder, "entry1");
+    let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
 
+    let entry: gtk::Entry = object(&builder, "address-bar");
     entry.connect_activate(clone!(drawing_area, entry => move |_| {
-            let hash = entry.get_text().unwrap();
-            println!("HASH: {}", hash);
-            // TODO: transfer this code to another module
-            let api = IpfsApi::new("127.0.0.1", 5001);
+        let hash = entry.get_text().unwrap();
+        println!("HASH: {}", hash);
+        let api = IpfsApi::new("127.0.0.1", 5001);
 
-            let bytes = api.block_get(&hash).unwrap();
-            let data = String::from_utf8(bytes.collect()).unwrap();
+        let bytes = match api.block_get(&hash){
+                Ok(raw_data) => raw_data,
+                Err(error) => {
+                    let msg = "Unable to get IPFS block. Is IPFS daemon running?";
+                    drawing_area.get_buffer()
+                                .expect("Error while loading text buffer")
+                                .set_text(&msg);
+                    return
+                }
+        };
+        let data =  String::from_utf8(bytes.collect())
+                    .expect("Unable read data from IPFS block as string");
 
-            println!("{}", data);
-            drawing_area.get_buffer().expect("Error while loading text buffer")
-                                     .set_text(&data);
+        println!("{}", data);
+        drawing_area.get_buffer().expect("Error while loading text buffer")
+                                 .set_text(&data);
+    }));
+
+    let bookmark: gtk::Button = object(&builder, "bookmark-button");
+    bookmark.connect_clicked(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
+
+    let back: gtk::Button = object(&builder, "back-button");
+    back.connect_clicked(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
+
+    let forward: gtk::Button = object(&builder, "forward-button");
+    forward.connect_clicked(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
+
+    let fork: gtk::Button = object(&builder, "fork-button");
+    fork.connect_clicked(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
+    }));
+
+    let profile: gtk::Button = object(&builder, "profile-button");
+    profile.connect_clicked(clone!(not_impl_dialog => move |_| {
+        not_impl_dialog.run();
+        not_impl_dialog.hide();
     }));
 }
