@@ -236,8 +236,3 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, windo
         not_impl_dialog.hide();
     }));
 }
-
-
-fn string_to_static_str(s: String) -> &'static str {
-    Box::leak(s.into_boxed_str())
-}
