@@ -15,6 +15,11 @@ extern crate glib;
 extern crate ipfsapi;
 use self::ipfsapi::IpfsApi;
 
+use std::env::args;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::BufReader;
+
 
 // make moving clones into closures more convenient
 macro_rules! clone {
@@ -56,7 +61,7 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
 
     build_menu_bar(&builder, &window);
     build_drawing_area(&builder, &drawing_area);
-    build_address_bar(&builder, &drawing_area);
+    build_address_bar(&builder, &drawing_area, &window);
 
     window.show_all();
 }
@@ -121,7 +126,7 @@ fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
 
 
     // Help
-    let about_dialog: gtk::AboutDialog = object(&builder, "aboutdialog1");
+    let about_dialog: gtk::AboutDialog = object(&builder, "aboutdialog");
     let about: gtk::ImageMenuItem = object(&builder, "imagemenuitem9");
     about.connect_activate(move |_| {
         about_dialog.run();
@@ -133,7 +138,7 @@ fn build_drawing_area(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
     println!("build_drawing_area");
 }
 
-fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
+fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, window: &gtk::ApplicationWindow) {
     let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
 
     let entry: gtk::Entry = object(&builder, "address-bar");
@@ -184,9 +189,55 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
         not_impl_dialog.hide();
     }));
 
+    let upload: gtk::Button = object(&builder, "upload-button");
+    upload.connect_clicked(clone!(drawing_area, window => move |_| {
+        // TODO move this to a impl?
+        let file_chooser = gtk::FileChooserDialog::new(
+            Some("Open File"), Some(&window), gtk::FileChooserAction::Open);
+        file_chooser.add_buttons(&[
+            ("Open", gtk::ResponseType::Ok.into()),
+            ("Cancel", gtk::ResponseType::Cancel.into()),
+        ]);
+
+        let response: i32 = gtk::ResponseType::Ok.into();
+        if file_chooser.run() == response {
+            let api = IpfsApi::new("127.0.0.1", 5001);
+            let filename = file_chooser.get_filename().expect("Couldn't get filename");
+            let mut file = File::open(&filename).expect("Couldn't open file");
+
+
+                let mut contents: String = String::new();
+                file.read_to_string(&mut contents).expect("Error while reading file");
+
+                // WARNING: The "static_str" variable was a workaround needed because
+                // the function "block_put" from IpfsApi only accepts it's argument if
+                // it has 'static lifetime. The best aproach, however, would be to
+                // modify IpfsApi to remove this limitation.
+                //
+                // TODO: Contribute to IpfsApi to remove the need of 'static lifetime
+                // from function block_put()
+                let static_str = Box::leak(contents.into_boxed_str());
+                let hash = match api.block_put(static_str.as_bytes()) {
+                    Ok(block_hash) => block_hash,
+                    Err(error) => {
+                        String::from("Unable to put IPFS block. Is IPFS daemon running?")
+                    }
+                };
+
+            drawing_area.get_buffer().expect("Couldn't get window").set_text(&hash);
+        }
+
+        file_chooser.destroy();
+    }));
+
     let profile: gtk::Button = object(&builder, "profile-button");
     profile.connect_clicked(clone!(not_impl_dialog => move |_| {
         not_impl_dialog.run();
         not_impl_dialog.hide();
     }));
+}
+
+
+fn string_to_static_str(s: String) -> &'static str {
+    Box::leak(s.into_boxed_str())
 }

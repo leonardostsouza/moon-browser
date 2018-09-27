@@ -11,7 +11,7 @@ use gtk::prelude::*;
 use std::env::args;
 
 fn main() {
-    let application = gtk::Application::new("com.github.basic",
+    let application = gtk::Application::new("org.ethereum.rs.moon",
                                         gio::ApplicationFlags::empty())
                                        .expect("Initialization failed...");
 

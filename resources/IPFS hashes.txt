@@ -1,3 +1,8 @@
-This file is on IPFS:
-As file: hash = QmVnVuAKUvHFGCGA2r9fu4ci7Gvzs4MWihPWY29moAdgYn
-As a block of raw data: hash = QmPz1T4x7SjUGNRYHMRFYZ3zWhufSHmkpBCZFqx1jjLKHF
+test.html:
+    As file: hash = QmVnVuAKUvHFGCGA2r9fu4ci7Gvzs4MWihPWY29moAdgYn
+    As a block of raw data: hash = QmPz1T4x7SjUGNRYHMRFYZ3zWhufSHmkpBCZFqx1jjLKHF
+
+IPFS hashes file: QmXiKDE6gmdsRvHMM98ykRkXauMoJ55kCXb6iaaA4MVbfD
+
+"Hello World": QmZUxo3nDiuiBsGzWmnfpADcQGNxwp9gHNSCPk2BH3rwPK
+"Hello World!": QmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e
