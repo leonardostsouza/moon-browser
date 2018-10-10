@@ -17,6 +17,12 @@ cairo-rs = { version = "^0", features = ["png"] }
 # IPFS API
 ipfsapi = "^0"
 
+# JSON-RPC -- Maybe not necessary
+jsonrpc-core = "^8.0.1"
+
+# HTTP
+reqwest = "^0.9.2"
+
 [features]
 default = ["gtk/v3_10"]
 gtk_3_10 = ["gtk/v3_10"]
