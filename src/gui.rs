@@ -11,6 +11,10 @@ use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
 
 extern crate glib;
 
+extern crate cairo;
+use gui::cairo::enums::{FontSlant, FontWeight};
+use self::cairo::Context;
+
 // TODO: transfer this include to a custom module
 extern crate ipfsapi;
 use self::ipfsapi::IpfsApi;
@@ -20,6 +24,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 
+const default_width: i32 = 800;
+const default_height: i32 = 600;
 
 // make moving clones into closures more convenient
 macro_rules! clone {
@@ -43,12 +49,12 @@ fn object<T: IsA<Object>>(builder: &gtk::Builder, name: &str) -> T {
     builder.get_object(name).expect(&format!("Failed to get {}", name)[..])
 }
 
-pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
+pub fn build_ui(application: &gtk::Application) {
     let glade_src = include_str!("gui.glade");
     let builder = Builder::new_from_string(glade_src);
 
     let window: ApplicationWindow = object(&builder, "applicationwindow1");
-    window.set_default_size(width, height);
+    window.set_default_size(default_width, default_height);
     window.set_application(application);
     window.connect_delete_event(clone!(window => move |_, _| {
         window.destroy();
@@ -57,7 +63,33 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
 
     // Changed drawing_area to TextView for testing purposes.
     // TODO: Change type back to gtk::DrawingArea when HTML interpreter is implemented
-    let drawing_area: gtk::TextView = object(&builder, "textview1");
+    let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
+    //let drawing_area: gtk::TextView = object(&builder, "textview1");
+
+    let surface = cairo::ImageSurface::create(
+        cairo::Format::ARgb32, 120, 120)
+        .expect("Can't create surface");
+    let cr = Context::new(&surface);
+
+    drawing_area.connect_draw(|_, cr| {
+        cr.scale(500f64, 500f64);
+
+        cr.select_font_face("Sans", FontSlant::Normal, FontWeight::Normal);
+        cr.set_font_size(0.04);
+
+        cr.move_to(0.08, 0.08);
+        cr.show_text("The quick brown fox jumps over the lazy dog.");
+
+        //cr.set_source_rgb(0.5, 0.5, 1.0);
+        //cr.fill_preserve();
+
+        cr.set_source_rgba(0.0, 1.0, 0.0, 0.9);
+        cr.arc(0.14, 0.53, 0.12, 0.0, 3.14159 * 2.);
+        //cr.arc(0.27, 0.65, 0.02, 0.0, 3.14159 * 2.);
+        cr.fill();
+
+        Inhibit(false)
+    });
 
     build_menu_bar(&builder, &window);
     build_drawing_area(&builder, &drawing_area);
@@ -134,11 +166,11 @@ fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
     });
 }
 
-fn build_drawing_area(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
+fn build_drawing_area(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea) {
     println!("build_drawing_area");
 }
 
-fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, window: &gtk::ApplicationWindow) {
+fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow) {
     let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
 
     let entry: gtk::Entry = object(&builder, "address-bar");
@@ -151,9 +183,9 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, windo
                 Ok(raw_data) => raw_data,
                 Err(error) => {
                     let msg = "Unable to get IPFS block. Is IPFS daemon running?";
-                    drawing_area.get_buffer()
+                    /*drawing_area.get_buffer()
                                 .expect("Error while loading text buffer")
-                                .set_text(&msg);
+                                .set_text(&msg);*/
                     return
                 }
         };
@@ -161,8 +193,18 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, windo
                     .expect("Unable read data from IPFS block as string");
 
         println!("{}", data);
-        drawing_area.get_buffer().expect("Error while loading text buffer")
-                                 .set_text(&data);
+        /*drawing_area.get_buffer().expect("Error while loading text buffer")
+                                 .set_text(&data);*/
+
+        /*drawing_area.connect_draw(move |_, cr|{
+            cr.select_font_face("Sans", FontSlant::Normal, FontWeight::Normal);
+            cr.set_font_size(0.35);
+
+            cr.move_to(0.04, 0.53);
+            cr.show_text("Hello World");
+
+            Inhibit(false);
+        });*/
     }));
 
     let bookmark: gtk::Button = object(&builder, "bookmark-button");
@@ -224,7 +266,7 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, windo
                     }
                 };
 
-            drawing_area.get_buffer().expect("Couldn't get window").set_text(&hash);
+            //drawing_area.get_buffer().expect("Couldn't get window").set_text(&hash);
         }
 
         file_chooser.destroy();

@@ -16,7 +16,7 @@ fn main() {
                                        .expect("Initialization failed...");
 
     application.connect_startup(|app| {
-        gui::build_ui(app, 800, 600);
+        gui::build_ui(app);
     });
     application.connect_activate(|_| {});
 
