@@ -8,29 +8,27 @@ use gio::prelude::*;
 extern crate gtk;
 use gtk::prelude::*;
 
-extern crate jsonrpc_core; // Maybe not necessary
-use jsonrpc_core::*;
-
-extern crate reqwest;
+extern crate web3;
+use web3::futures::Future;
+use web3::types::Address;
 
 use std::env::args;
 
 fn main() {
-    let client = reqwest::Client::new();
+    let (_eloop, http) = web3::transports::Http::new("https://ropsten.infura.io/").unwrap();
+    let web3 = web3::Web3::new(http);
+    let bln = web3.eth().block_number().wait().unwrap();
+    println!("Latest Block Number: {:?}", bln);
 
-    let get_req_url = "https://api.infura.io/v1/jsonrpc/ropsten/eth_blockNumber";
-    let post_req_url = "https://ropsten.infura.io/";
-	let post_json_rpc = r#"{"jsonrpc":"2.0","method":"eth_blockNumber","params": [],"id":1}"#;
+    let acc = web3.eth().accounts().wait().unwrap();
+    println!("Acounts: {:?}", acc);
 
-    // Infura GET test
-    let mut res = client.get(get_req_url).send().expect("Infura GET test failed");
-    println!("{}", res.text().unwrap());
-
-    // Infura POST test
-    res = client.post(post_req_url)
-        .body(post_json_rpc)
-        .send().expect("Infura POST test failed");
-    println!("{}", res.text().unwrap());
+    let vec: &[u8] = b"0xcEBD3825A1995A30EA8Bd0666E959f0c8bcEfCF3";
+    let mut addr: Address = Address::new();
+    addr.clone_from_slice(vec);
+    //let addr: Address = Address::random();
+    let balance = web3.eth().balance(addr, None).wait().unwrap();
+    println!("Vec: {:?}\nAddress: {:x?}\nBalance: {:?}", vec, addr, balance);
 
     /*let application = gtk::Application::new("org.ethereum.rs.moon",
                                         gio::ApplicationFlags::empty())
