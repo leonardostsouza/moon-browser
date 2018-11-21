@@ -145,7 +145,7 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, windo
     entry.connect_activate(clone!(drawing_area, entry => move |_| {
         let hash = entry.get_text().unwrap();
         println!("HASH: {}", hash);
-        let api = IpfsApi::new("127.0.0.1", 5001);
+        let api = IpfsApi::new("ipfs.infura.io", 5001);
 
         let bytes = match api.block_get(&hash){
                 Ok(raw_data) => raw_data,

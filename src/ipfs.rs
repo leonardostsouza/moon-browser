@@ -1,22 +1,34 @@
 // ipfs.rs
-// Abstraction Layer for interacting with IPFS
+// Abstraction Layer for interacting with IPFS API
 
-extern crate reqwest;
+extern crate ipfsapi;
+use self::ipfsapi::IpfsApi;
 
-use std::io::Read;
+const server : &str = "ipfs.infura.io";
+const port : u16 = 5001;
+/*static api : IpfsApi = IpfsApi{
+    server: server,
+    port: port
+};*/
 
-const ipfs_server : &str = "https://ipfs.infura.io:5001/";
+pub fn block_get(hash: &str) {
+    let api = IpfsApi::new(server, port);
 
-pub fn block_get(hash: &str) -> Result<String, reqwest::Error>{
-    let method : &str = "api/v0/block/get?arg=";
-    let url = [[ipfs_server, method].join(""), hash.to_owned()].join("");
-    let body = reqwest::get(url.as_str());
-    body.unwrap().text()
+    let bytes = match api.block_get(&hash){
+            Ok(raw_data) => raw_data,
+            Err(error) => {
+                return
+            }
+    };
+    let data =  String::from_utf8(bytes.collect())
+                .expect("Unable read data from IPFS block as string");
+    data
+
 }
 
 // TODO implement block_put()
 pub fn block_put/*<D : 'static + Read + Send>*/(/*data: D*/) {
-    const method : &str = "api/v0/block/put";
+    /*const method : &str = "api/v0/block/put";
     let url = [ipfs_server, method].join("");
     println!("=====> block_put -- url = {}", url);
 
@@ -24,5 +36,5 @@ pub fn block_put/*<D : 'static + Read + Send>*/(/*data: D*/) {
     let mut res = client.post(url.as_str())
                 .body("O rato roeu a roupa do rei de Roma")
                 .send().unwrap();
-    println!("=====> block_put -- res = {:?}", res);
+    println!("=====> block_put -- res = {:?}", res);*/
 }
