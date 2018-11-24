@@ -1,7 +1,7 @@
 #![allow(warnings)]
 
 pub mod gui;
-pub mod ipfs;
+//pub mod ipfs;
 
 extern crate gio;
 use gio::prelude::*;
@@ -9,25 +9,25 @@ use gio::prelude::*;
 extern crate gtk;
 use gtk::prelude::*;
 
-extern crate web3;
+/*extern crate web3;
 use web3::futures::Future;
 use web3::types::Address;
+*/
+//extern crate reqwest;
 
-extern crate reqwest;
-
-extern crate ipfsapi;
-use self::ipfsapi::IpfsApi;
+/*extern crate ipfsapi;
+use self::ipfsapi::IpfsApi;*/
 
 use std::env::args;
 
 fn main() {
     // IPFS Mod test
-    let hash = "Qmb3qWYf462ypcjP9KRLAozEM7xSo4aDNNJchFZfDSyQSE";
-    println!("{:?}", ipfs::block_get(hash));
-    
+/*    let hash = "Qmb3qWYf462ypcjP9KRLAozEM7xSo4aDNNJchFZfDSyQSE";
+    println!("{:?}", ipfs::block_get(hash));*/
 
 
-    /*let application = gtk::Application::new("org.ethereum.rs.moon",
+
+    let application = gtk::Application::new("org.ethereum.rs.moon",
                                         gio::ApplicationFlags::empty())
                                        .expect("Initialization failed...");
 
@@ -36,5 +36,5 @@ fn main() {
     });
     application.connect_activate(|_| {});
 
-    application.run(&args().collect::<Vec<_>>());*/
+    application.run(&args().collect::<Vec<_>>());
 }

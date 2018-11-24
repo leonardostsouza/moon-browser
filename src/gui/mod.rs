@@ -11,9 +11,9 @@ use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
 
 extern crate glib;
 
-// TODO: transfer this include to a custom module
-extern crate ipfsapi;
-use self::ipfsapi::IpfsApi;
+mod ipfs;
+/*extern crate ipfsapi;
+use self::ipfsapi::IpfsApi;*/
 
 use std::env::args;
 use std::fs::File;
@@ -145,21 +145,7 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, windo
     entry.connect_activate(clone!(drawing_area, entry => move |_| {
         let hash = entry.get_text().unwrap();
         println!("HASH: {}", hash);
-        let api = IpfsApi::new("ipfs.infura.io", 5001);
-
-        let bytes = match api.block_get(&hash){
-                Ok(raw_data) => raw_data,
-                Err(error) => {
-                    let msg = "Unable to get IPFS block. Is IPFS daemon running?";
-                    drawing_area.get_buffer()
-                                .expect("Error while loading text buffer")
-                                .set_text(&msg);
-                    return
-                }
-        };
-        let data =  String::from_utf8(bytes.collect())
-                    .expect("Unable read data from IPFS block as string");
-
+        let data = ipfs::block_get(&hash);
         println!("{}", data);
         drawing_area.get_buffer().expect("Error while loading text buffer")
                                  .set_text(&data);
@@ -201,29 +187,14 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, windo
 
         let response: i32 = gtk::ResponseType::Ok.into();
         if file_chooser.run() == response {
-            let api = IpfsApi::new("127.0.0.1", 5001);
             let filename = file_chooser.get_filename().expect("Couldn't get filename");
             let mut file = File::open(&filename).expect("Couldn't open file");
 
+            let mut contents: String = String::new();
+            file.read_to_string(&mut contents).expect("Error while reading file");
 
-                let mut contents: String = String::new();
-                file.read_to_string(&mut contents).expect("Error while reading file");
-
-                // WARNING: The "static_str" variable was a workaround needed because
-                // the function "block_put" from IpfsApi only accepts it's argument if
-                // it has 'static lifetime. The best aproach, however, would be to
-                // modify IpfsApi to remove this limitation.
-                //
-                // TODO: Contribute to IpfsApi to remove the need of 'static lifetime
-                // from function block_put()
-                let static_str = Box::leak(contents.into_boxed_str());
-                let hash = match api.block_put(static_str.as_bytes()) {
-                    Ok(block_hash) => block_hash,
-                    Err(error) => {
-                        String::from("Unable to put IPFS block. Is IPFS daemon running?")
-                    }
-                };
-
+            let static_str = Box::leak(contents.into_boxed_str());
+            let hash = ipfs::block_put(static_str.as_bytes());
             drawing_area.get_buffer().expect("Couldn't get window").set_text(&hash);
         }
 

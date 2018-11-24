@@ -14,6 +14,7 @@ const port : u16 = 5001;
 pub fn block_get(hash: &str) -> String {
     let api = IpfsApi::new(server, port);
 
+    // TODO: Implement proper Error handling
     let bytes = api.block_get(&hash).unwrap();
     let data =  String::from_utf8(bytes.collect())
                 .expect("Unable read data from IPFS block as string");
@@ -21,7 +22,7 @@ pub fn block_get(hash: &str) -> String {
 }
 
 // TODO implement block_put()
-pub fn block_put(data: &'static str) -> String {
+pub fn block_put(data: &'static [u8]/*&'static str*/) -> String {
     let api = IpfsApi::new(server, port);
     // WARNING: The &'static str data variable was a workaround needed because
     // the function "block_put" from IpfsApi only accepts it's argument if
@@ -30,7 +31,7 @@ pub fn block_put(data: &'static str) -> String {
     //
     // TODO: Modify IpfsApi to remove the need of 'static lifetime
     // from function block_put() if possible
-    let hash = match api.block_put(data.as_bytes()) {
+    let hash = match api.block_put(data/*.as_bytes()*/) {
         Ok(block_hash) => block_hash,
         Err(error) => {
             String::from("Unable to put IPFS block")
