@@ -1,5 +1,3 @@
-test.html:
-    As file: hash = QmVnVuAKUvHFGCGA2r9fu4ci7Gvzs4MWihPWY29moAdgYn
-    As a block of raw data: hash = QmPz1T4x7SjUGNRYHMRFYZ3zWhufSHmkpBCZFqx1jjLKHF
-
-"Hello World!": QmfM2r8seH2GiRaC4esTjeraXEachRt8ZsSeGaWTPLyMoG
+Hello World!: QmbuQbmm7z1AeZjbBw2iX1557ZoUFQ8vrMKaaw2UYrt5zG
+Hello, my baby!: Qmb3qWYf462ypcjP9KRLAozEM7xSo4aDNNJchFZfDSyQSE
+Hello, my ragtime gal!: QmQVLTNJxJgZVKSTj4tKapVq6GWHg1aHdQ6RQXxNT5LHGE
