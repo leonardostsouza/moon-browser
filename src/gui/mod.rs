@@ -12,8 +12,6 @@ use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
 extern crate glib;
 
 mod ipfs;
-/*extern crate ipfsapi;
-use self::ipfsapi::IpfsApi;*/
 
 use std::env::args;
 use std::fs::File;

@@ -24,8 +24,9 @@ pub fn block_get(hash: &str) -> String {
 // TODO implement block_put()
 pub fn block_put(data: &'static [u8]/*&'static str*/) -> String {
     let api = IpfsApi::new(server, port);
-    // WARNING: The &'static str data variable was a workaround needed because
-    // the function "block_put" from IpfsApi only accepts it's argument if
+    // WARNING: The type "&'static [u8]" of the data variable was a workaround
+    // needed because the function "block_put"
+    // from IpfsApi only accepts it's argument if
     // it has 'static lifetime. The best aproach, however, would be to
     // modify IpfsApi to remove this limitation if possible.
     //
