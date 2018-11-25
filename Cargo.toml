@@ -15,7 +15,7 @@ pango = "^0"
 cairo-rs = { version = "^0", features = ["png"] }
 
 # IPFS API
-ipfsapi = { path = "../rust-ipfs-api" } # "^0"
+ipfsapi = { path = "../rust-ipfs-api" }
 
 # Ethereum Interaction
 web3 = { git = "https://github.com/tomusdrw/rust-web3" }
