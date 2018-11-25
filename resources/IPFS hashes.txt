@@ -1,8 +1,4 @@
-test.html:
-    As file: hash = QmVnVuAKUvHFGCGA2r9fu4ci7Gvzs4MWihPWY29moAdgYn
-    As a block of raw data: hash = QmPz1T4x7SjUGNRYHMRFYZ3zWhufSHmkpBCZFqx1jjLKHF
-
-IPFS hashes file: QmXiKDE6gmdsRvHMM98ykRkXauMoJ55kCXb6iaaA4MVbfD
-
-"Hello World": QmZUxo3nDiuiBsGzWmnfpADcQGNxwp9gHNSCPk2BH3rwPK
-"Hello World!": QmWvQxTqbG2Z9HPJgG57jjwR154cKhbtJenbyYTWkjgF3e
+Hello World!: QmbuQbmm7z1AeZjbBw2iX1557ZoUFQ8vrMKaaw2UYrt5zG
+Hello, my baby!: Qmb3qWYf462ypcjP9KRLAozEM7xSo4aDNNJchFZfDSyQSE
+Hello, my honey!: QmVNj2tqhQRE7Q4RHsY2HqaKeeQM4EGSYrgu4L7D4BGXF8
+Hello, my ragtime gal!: QmQVLTNJxJgZVKSTj4tKapVq6GWHg1aHdQ6RQXxNT5LHGE
