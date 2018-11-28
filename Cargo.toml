@@ -1,6 +1,6 @@
 [package]
-name = "moon-rs"
-version = "0.1.0"
+name = "moon-browser"
+version = "0.1.1"
 authors = ["Leonardo Souza <leonardostsouza@gmail.com>"]
 
 [dependencies]
