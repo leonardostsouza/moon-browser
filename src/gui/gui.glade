@@ -2,30 +2,10 @@
 <!-- Generated with glade 3.18.3 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
-  <object class="GtkImage" id="image-back">
+  <object class="GtkImage" id="image-download">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="stock">gtk-go-back</property>
-  </object>
-  <object class="GtkImage" id="image-bookmark">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="icon_name">emblem-favorite</property>
-  </object>
-  <object class="GtkImage" id="image-fork">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-jump-to</property>
-  </object>
-  <object class="GtkImage" id="image-forward">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-go-forward</property>
-  </object>
-  <object class="GtkImage" id="image-profile">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-orientation-portrait</property>
+    <property name="stock">gtk-go-down</property>
   </object>
   <object class="GtkImage" id="image-upload">
     <property name="visible">True</property>
@@ -193,48 +173,6 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkButton" id="bookmark-button">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="image">image-bookmark</property>
-                <property name="relief">none</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="back-button">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="image">image-back</property>
-                <property name="relief">none</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="forward-button">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="image">image-forward</property>
-                <property name="relief">none</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkEntry" id="address-bar">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -255,11 +193,11 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="fork-button">
+              <object class="GtkButton" id="download-button">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="image">image-fork</property>
+                <property name="image">image-download</property>
                 <property name="relief">none</property>
                 <property name="xalign">0.40000000596046448</property>
                 <property name="yalign">0.40000000596046448</property>
@@ -283,20 +221,6 @@
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">5</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="profile-button">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="image">image-profile</property>
-                <property name="relief">none</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">6</property>
               </packing>
             </child>
           </object>
@@ -323,12 +247,15 @@
             <property name="can_focus">True</property>
             <property name="shadow_type">in</property>
             <child>
-              <object class="GtkTextView" id="textview1">
+              <object class="GtkViewport" id="viewport1">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="editable">False</property>
-                <property name="cursor_visible">False</property>
-                <property name="accepts_tab">False</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkDrawingArea" id="drawingarea1">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                  </object>
+                </child>
               </object>
             </child>
           </object>

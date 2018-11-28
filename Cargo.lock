@@ -645,8 +645,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "moon-rs"
-version = "0.1.0"
+name = "moon-browser"
+version = "0.1.1"
 dependencies = [
  "cairo-rs 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -657,6 +657,7 @@ dependencies = [
  "gtk 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ipfsapi 0.2.2",
  "pango 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

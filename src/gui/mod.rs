@@ -11,6 +11,10 @@ use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
 
 extern crate glib;
 
+extern crate cairo;
+use gui::cairo::enums::{FontSlant, FontWeight};
+use self::cairo::Context;
+
 mod ipfs;
 
 use std::env::args;
@@ -18,6 +22,10 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 
+//*******************************
+extern crate rand;
+use self::rand::Rng;
+//*******************************
 
 // make moving clones into closures more convenient
 macro_rules! clone {
@@ -53,17 +61,13 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
         Inhibit(false)
     }));
 
-    // Changed drawing_area to TextView for testing purposes.
-    // TODO: Change type back to gtk::DrawingArea when HTML interpreter is implemented
-    let drawing_area: gtk::TextView = object(&builder, "textview1");
+    let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
 
     build_menu_bar(&builder, &window);
-    build_drawing_area(&builder, &drawing_area);
     build_address_bar(&builder, &drawing_area, &window);
 
     window.show_all();
 }
-
 
 fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
     let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
@@ -132,45 +136,42 @@ fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
     });
 }
 
-fn build_drawing_area(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
-    println!("build_drawing_area");
-}
-
-fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, window: &gtk::ApplicationWindow) {
+fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow) {
     let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
 
     let entry: gtk::Entry = object(&builder, "address-bar");
     entry.connect_activate(clone!(drawing_area, entry => move |_| {
         let hash = entry.get_text().unwrap();
-        println!("HASH: {}", hash);
+        println!("HASH: {:?}", hash);
         let data = ipfs::block_get(&hash);
-        println!("{}", data);
-        drawing_area.get_buffer().expect("Error while loading text buffer")
-                                 .set_text(&data);
+        println!("{:?}", data);
+        /*drawing_area.get_buffer().expect("Error while loading text buffer")
+                                 .set_text(&data);*/
+        draw(&drawing_area, "DRAWING_AREA TEST");
+        println!("done!")
     }));
 
-    let bookmark: gtk::Button = object(&builder, "bookmark-button");
-    bookmark.connect_clicked(clone!(not_impl_dialog => move |_| {
-        not_impl_dialog.run();
-        not_impl_dialog.hide();
-    }));
+    let download: gtk::Button = object(&builder, "download-button");
+    download.connect_clicked(clone!(window, entry => move |_| {
+        // TODO move this to a impl?
+        let file_chooser = gtk::FileChooserDialog::new(
+            Some("Save File"), Some(&window), gtk::FileChooserAction::Save);
+        file_chooser.add_buttons(&[
+            ("Save", gtk::ResponseType::Ok.into()),
+            ("Cancel", gtk::ResponseType::Cancel.into()),
+        ]);
 
-    let back: gtk::Button = object(&builder, "back-button");
-    back.connect_clicked(clone!(not_impl_dialog => move |_| {
-        not_impl_dialog.run();
-        not_impl_dialog.hide();
-    }));
+        let response: i32 = gtk::ResponseType::Ok.into();
+        if file_chooser.run() == response {
+            let hash = entry.get_text().unwrap();
+            let data = ipfs::block_get(&hash);
 
-    let forward: gtk::Button = object(&builder, "forward-button");
-    forward.connect_clicked(clone!(not_impl_dialog => move |_| {
-        not_impl_dialog.run();
-        not_impl_dialog.hide();
-    }));
+            let filename = file_chooser.get_filename().expect("Couldn't get filename");
+            let mut file = File::create(&filename).expect("Couldn't save file");
+            file.write_all(&data.as_bytes());
+        }
 
-    let fork: gtk::Button = object(&builder, "fork-button");
-    fork.connect_clicked(clone!(not_impl_dialog => move |_| {
-        not_impl_dialog.run();
-        not_impl_dialog.hide();
+        file_chooser.destroy();
     }));
 
     let upload: gtk::Button = object(&builder, "upload-button");
@@ -193,20 +194,51 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, windo
 
             let static_str = Box::leak(contents.into_boxed_str());
             let hash = ipfs::block_put(static_str.as_bytes());
-            drawing_area.get_buffer().expect("Couldn't get window").set_text(&hash);
+            //drawing_area.get_buffer().expect("Couldn't get window").set_text(&hash);
+            println!("Uploaded file hash: {:?}", hash);
         }
 
         file_chooser.destroy();
     }));
 
-    let profile: gtk::Button = object(&builder, "profile-button");
+    /*let profile: gtk::Button = object(&builder, "profile-button");
     profile.connect_clicked(clone!(not_impl_dialog => move |_| {
         not_impl_dialog.run();
         not_impl_dialog.hide();
-    }));
+    }));*/
 }
 
+fn draw(drawing_area: &gtk::DrawingArea, shape: &str){
+    println!("drawing shape {:?}", shape);
 
-fn string_to_static_str(s: String) -> &'static str {
-    Box::leak(s.into_boxed_str())
+    let surface = cairo::ImageSurface::create(
+        cairo::Format::ARgb32, 120, 120)
+        .expect("Can't create surface");
+    let cr = Context::new(&surface);
+
+    drawing_area.connect_draw(|_, cr| {
+        cr.scale(500f64, 500f64);
+
+        cr.select_font_face("Sans", FontSlant::Normal, FontWeight::Normal);
+        cr.set_font_size(0.04);
+
+        cr.move_to(0.08, 0.08);
+        cr.show_text("The quick brown fox jumps over the lazy dog.");
+
+        //cr.set_source_rgb(0.5, 0.5, 1.0);
+        //cr.fill_preserve();
+        let mut rng = rand::thread_rng();
+        let red: f64 = rng.gen_range(0.0, 1.0);
+        let green: f64 = rng.gen_range(0.0, 1.0);
+        let blue: f64 = rng.gen_range(0.0, 1.0);
+
+        cr.set_source_rgba(red, green, blue, 0.9);
+        cr.arc(0.14, 0.53, 0.12, 0.0, 3.14159 * 2.);
+        //cr.arc(0.27, 0.65, 0.02, 0.0, 3.14159 * 2.);
+        cr.fill();
+
+        Inhibit(false)
+    });
+
+    drawing_area.queue_draw();
 }
