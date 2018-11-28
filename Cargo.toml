@@ -18,10 +18,10 @@ cairo-rs = { version = "^0", features = ["png"] }
 ipfsapi = { path = "../rust-ipfs-api" }
 
 # Ethereum Interaction
-web3 = { git = "https://github.com/tomusdrw/rust-web3" }
+#web3 = { git = "https://github.com/tomusdrw/rust-web3" }
 
 # HTTP
-reqwest = "^0.9.2"
+#reqwest = "^0.9.2"
 
 
 [features]
