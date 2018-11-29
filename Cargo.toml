@@ -23,8 +23,17 @@ ipfsapi = { path = "../rust-ipfs-api" }
 # HTTP
 #reqwest = "^0.9.2"
 
+# Formality
+formality = "0.1.10"
+formality-document = {path = "../formality-document"}
+
+# Utilities
+serde = "^1.0.80"
+serde_json = "^1.0.33"
+serde_derive = "^1.0.80"
+
 # Dependencies for testing purposes. Delete for building release
-rand = "^0.6.1" 
+rand = "^0.6.1"
 
 [features]
 default = ["gtk/v3_10"]

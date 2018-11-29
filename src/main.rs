@@ -1,12 +1,10 @@
 #![allow(warnings)]
+extern crate moon_browser as mb;
+use mb::gio::prelude::*;
+use mb::gtk::prelude::*;
 
-pub mod gui;
-
-extern crate gio;
-use gio::prelude::*;
-
-extern crate gtk;
-use gtk::prelude::*;
+use mb::formality_document::document::*;
+use mb::gui;
 
 use std::env::args;
 

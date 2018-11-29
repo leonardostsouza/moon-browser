@@ -2,29 +2,26 @@
 // This file contains all functions related to building the Graphical User
 // interface using GTK
 
-extern crate gio;
 use gio::prelude::*;
-
-extern crate gtk;
 use gtk::prelude::*;
 use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
 
-extern crate glib;
+//use cairo::enums::{FontSlant, FontWeight};
+//use cairo::Context;
 
-extern crate cairo;
-use gui::cairo::enums::{FontSlant, FontWeight};
-use self::cairo::Context;
+use ipfs;
 
-mod ipfs;
-
-use std::env::args;
+//use std::env::args;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::BufReader;
+//use std::io::BufReader;
 
 //*******************************
-extern crate rand;
-use self::rand::Rng;
+//extern crate formality_document;
+use formality_document::document::*;
+
+//extern crate rand;
+//use self::rand::Rng;
 //*******************************
 
 // make moving clones into closures more convenient
@@ -147,7 +144,8 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
         println!("{:?}", data);
         /*drawing_area.get_buffer().expect("Error while loading text buffer")
                                  .set_text(&data);*/
-        draw(&drawing_area, "DRAWING_AREA TEST");
+        let doc: Document = vec![Element::Circle{x: 50, y: 50, r: 20}];
+        render(&drawing_area, doc);
         println!("done!")
     }));
 
@@ -175,7 +173,7 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
     }));
 
     let upload: gtk::Button = object(&builder, "upload-button");
-    upload.connect_clicked(clone!(drawing_area, window => move |_| {
+    upload.connect_clicked(clone!(/*drawing_area,*/ window => move |_| {
         // TODO move this to a impl?
         let file_chooser = gtk::FileChooserDialog::new(
             Some("Open File"), Some(&window), gtk::FileChooserAction::Open);
@@ -208,10 +206,19 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
     }));*/
 }
 
-fn draw(drawing_area: &gtk::DrawingArea, shape: &str){
-    println!("drawing shape {:?}", shape);
+fn render_element(element: Element) {
 
-    let surface = cairo::ImageSurface::create(
+}
+
+pub fn render(drawing_area: &gtk::DrawingArea, document: Document){
+    println!("drawing document {:?}", document);
+
+    for elem in document {
+        render_element(elem);
+    }
+
+    println!("Renderzation complete");
+    /*let surface = cairo::ImageSurface::create(
         cairo::Format::ARgb32, 120, 120)
         .expect("Can't create surface");
     let cr = Context::new(&surface);
@@ -240,5 +247,5 @@ fn draw(drawing_area: &gtk::DrawingArea, shape: &str){
         Inhibit(false)
     });
 
-    drawing_area.queue_draw();
+    drawing_area.queue_draw();*/
 }
