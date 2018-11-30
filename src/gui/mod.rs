@@ -2,27 +2,16 @@
 // This file contains all functions related to building the Graphical User
 // interface using GTK
 
-use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
-
-//use cairo::enums::{FontSlant, FontWeight};
-//use cairo::Context;
+use cairo::{Context, Format, ImageSurface, Operator};
 
 use ipfs;
-
-//use std::env::args;
-use std::fs::File;
-use std::io::prelude::*;
-//use std::io::BufReader;
-
-//*******************************
-//extern crate formality_document;
 use formality_document::document::*;
 
-//extern crate rand;
-//use self::rand::Rng;
-//*******************************
+use std::fs::File;
+use std::io::prelude::*;
+
 
 // make moving clones into closures more convenient
 macro_rules! clone {
@@ -43,7 +32,7 @@ macro_rules! clone {
 }
 
 fn object<T: IsA<Object>>(builder: &gtk::Builder, name: &str) -> T {
-    builder.get_object(name).expect(&format!("Failed to get {}", name)[..])
+    builder.get_object(name).expect(&format!("ERROR: Failed to get {}", name)[..])
 }
 
 pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
@@ -134,19 +123,14 @@ fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
 }
 
 fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow) {
-    let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
-
     let entry: gtk::Entry = object(&builder, "address-bar");
     entry.connect_activate(clone!(drawing_area, entry => move |_| {
         let hash = entry.get_text().unwrap();
-        println!("HASH: {:?}", hash);
+        println!("DEBUG => Address bar HASH: {:?}", hash);
         let data = ipfs::block_get(&hash);
-        println!("{:?}", data);
-        /*drawing_area.get_buffer().expect("Error while loading text buffer")
-                                 .set_text(&data);*/
-        let doc: Document = vec![Element::Circle{x: 50, y: 50, r: 20}];
+        println!("DEBUG => Request done. DATA: {:?}", data);
+        let doc: Document = serde_json::from_str(&data).unwrap();
         render(&drawing_area, doc);
-        println!("done!")
     }));
 
     let download: gtk::Button = object(&builder, "download-button");
@@ -166,6 +150,7 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
 
             let filename = file_chooser.get_filename().expect("Couldn't get filename");
             let mut file = File::create(&filename).expect("Couldn't save file");
+            // TODO: Implement error handling for file.write_all Result.
             file.write_all(&data.as_bytes());
         }
 
@@ -173,8 +158,8 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
     }));
 
     let upload: gtk::Button = object(&builder, "upload-button");
-    upload.connect_clicked(clone!(/*drawing_area,*/ window => move |_| {
-        // TODO move this to a impl?
+    upload.connect_clicked(clone!(window => move |_| {
+        // TODO: move this to a impl?
         let file_chooser = gtk::FileChooserDialog::new(
             Some("Open File"), Some(&window), gtk::FileChooserAction::Open);
         file_chooser.add_buttons(&[
@@ -192,13 +177,15 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
 
             let static_str = Box::leak(contents.into_boxed_str());
             let hash = ipfs::block_put(static_str.as_bytes());
-            //drawing_area.get_buffer().expect("Couldn't get window").set_text(&hash);
-            println!("Uploaded file hash: {:?}", hash);
+            println!("DEBUG: Uploaded file. HASH = {:?}", hash);
         }
 
         file_chooser.destroy();
     }));
 
+    // ATTENTION: This piece of code was removed temporarily.
+    //Please, do not erase the commented section below.
+    // let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
     /*let profile: gtk::Button = object(&builder, "profile-button");
     profile.connect_clicked(clone!(not_impl_dialog => move |_| {
         not_impl_dialog.run();
@@ -206,46 +193,44 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
     }));*/
 }
 
-fn render_element(element: Element) {
-
+fn render_element(elem: &Element, ctx: &Context) {
+    match elem {
+        Element::Circle{x, y, r} => {
+            ctx.set_source_rgb(0.5, 0.5, 1.0);
+            ctx.arc(*x as f64, *y as f64, *r as f64, 0.0, 3.14159 * 2.);
+            ctx.fill();
+        }
+        Element::Square{x, y, r} => {
+            ctx.set_source_rgb(0.5, 0.5, 1.0);
+            ctx.rectangle(*x as f64, *y as f64, *r as f64, *r as f64);
+            ctx.fill();
+        }
+    }
 }
 
-pub fn render(drawing_area: &gtk::DrawingArea, document: Document){
-    println!("drawing document {:?}", document);
+pub fn render(drawing_area: &gtk::DrawingArea, doc: Document){
+    println!("DEBUG: drawing document {:?}", doc);
+    let surface = ImageSurface::create(Format::ARgb32, 120, 120)
+        .expect("ERROR: Can't create surface");
+    let ctx = Context::new(&surface);
+    ctx.save(); // save default cairo contect state
 
-    for elem in document {
-        render_element(elem);
-    }
+    drawing_area.connect_draw(move |_, ctx| {
+        // Clear painting surface
+        ctx.save();
+        ctx.set_source_rgb(1.0, 1.0, 1.0);
+        ctx.set_operator(Operator::Source);
+        ctx.paint();
+        ctx.restore();
 
-    println!("Renderzation complete");
-    /*let surface = cairo::ImageSurface::create(
-        cairo::Format::ARgb32, 120, 120)
-        .expect("Can't create surface");
-    let cr = Context::new(&surface);
-
-    drawing_area.connect_draw(|_, cr| {
-        cr.scale(500f64, 500f64);
-
-        cr.select_font_face("Sans", FontSlant::Normal, FontWeight::Normal);
-        cr.set_font_size(0.04);
-
-        cr.move_to(0.08, 0.08);
-        cr.show_text("The quick brown fox jumps over the lazy dog.");
-
-        //cr.set_source_rgb(0.5, 0.5, 1.0);
-        //cr.fill_preserve();
-        let mut rng = rand::thread_rng();
-        let red: f64 = rng.gen_range(0.0, 1.0);
-        let green: f64 = rng.gen_range(0.0, 1.0);
-        let blue: f64 = rng.gen_range(0.0, 1.0);
-
-        cr.set_source_rgba(red, green, blue, 0.9);
-        cr.arc(0.14, 0.53, 0.12, 0.0, 3.14159 * 2.);
-        //cr.arc(0.27, 0.65, 0.02, 0.0, 3.14159 * 2.);
-        cr.fill();
+        // Draw formality-document
+        for elem in &doc {
+            render_element(&elem, &ctx);
+        }
 
         Inhibit(false)
     });
 
-    drawing_area.queue_draw();*/
+    drawing_area.queue_draw();
+    println!("DEBUG: Formality-document render complete");
 }
