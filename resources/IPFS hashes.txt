@@ -1,4 +1,10 @@
+* Pure text
 Hello World!: QmbuQbmm7z1AeZjbBw2iX1557ZoUFQ8vrMKaaw2UYrt5zG
 Hello, my baby!: Qmb3qWYf462ypcjP9KRLAozEM7xSo4aDNNJchFZfDSyQSE
 Hello, my honey!: QmVNj2tqhQRE7Q4RHsY2HqaKeeQM4EGSYrgu4L7D4BGXF8
 Hello, my ragtime gal!: QmQVLTNJxJgZVKSTj4tKapVq6GWHg1aHdQ6RQXxNT5LHGE
+
+* Formality Document
+Circle: QmQkZMvTNjRzYEjzi5oHCbaWjTGqvVrue164vxMjwmbRvG
+Square: QmfNLfUaD2iSSxVgYX2tiEry5hNHdvWwX9RYMN39jF3ekS
+Circle and Square: QmWV7W2oSGD87XbqW3eLjpkcQxjuVKdRA99h6MhAzkXQca

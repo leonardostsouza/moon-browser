@@ -2,22 +2,15 @@
 // This file contains all functions related to building the Graphical User
 // interface using GTK
 
-extern crate gio;
-use gio::prelude::*;
-
-extern crate gtk;
 use gtk::prelude::*;
 use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
+use cairo::{Context, Format, ImageSurface, Operator};
 
-extern crate glib;
+use ipfs;
+use formality_document::document::*;
 
-mod ipfs;
-
-use std::env::args;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::BufReader;
-
 
 // make moving clones into closures more convenient
 macro_rules! clone {
@@ -38,7 +31,7 @@ macro_rules! clone {
 }
 
 fn object<T: IsA<Object>>(builder: &gtk::Builder, name: &str) -> T {
-    builder.get_object(name).expect(&format!("Failed to get {}", name)[..])
+    builder.get_object(name).expect(&format!("ERROR: Failed to get {}", name)[..])
 }
 
 pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
@@ -53,17 +46,13 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
         Inhibit(false)
     }));
 
-    // Changed drawing_area to TextView for testing purposes.
-    // TODO: Change type back to gtk::DrawingArea when HTML interpreter is implemented
-    let drawing_area: gtk::TextView = object(&builder, "textview1");
+    let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
 
     build_menu_bar(&builder, &window);
-    build_drawing_area(&builder, &drawing_area);
     build_address_bar(&builder, &drawing_area, &window);
 
     window.show_all();
 }
-
 
 fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
     let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
@@ -132,50 +121,44 @@ fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
     });
 }
 
-fn build_drawing_area(builder: &gtk::Builder, drawing_area: &gtk::TextView) {
-    println!("build_drawing_area");
-}
-
-fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, window: &gtk::ApplicationWindow) {
-    let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
-
+fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow) {
     let entry: gtk::Entry = object(&builder, "address-bar");
     entry.connect_activate(clone!(drawing_area, entry => move |_| {
         let hash = entry.get_text().unwrap();
-        println!("HASH: {}", hash);
+        println!("DEBUG => Address bar HASH: {:?}", hash);
         let data = ipfs::block_get(&hash);
-        println!("{}", data);
-        drawing_area.get_buffer().expect("Error while loading text buffer")
-                                 .set_text(&data);
+        println!("DEBUG => Request done. DATA: {:?}", data);
+        let doc: Document = serde_json::from_str(&data).unwrap();
+        render(&drawing_area, doc);
     }));
 
-    let bookmark: gtk::Button = object(&builder, "bookmark-button");
-    bookmark.connect_clicked(clone!(not_impl_dialog => move |_| {
-        not_impl_dialog.run();
-        not_impl_dialog.hide();
-    }));
+    let download: gtk::Button = object(&builder, "download-button");
+    download.connect_clicked(clone!(window, entry => move |_| {
+        // TODO move this to a impl?
+        let file_chooser = gtk::FileChooserDialog::new(
+            Some("Save File"), Some(&window), gtk::FileChooserAction::Save);
+        file_chooser.add_buttons(&[
+            ("Save", gtk::ResponseType::Ok.into()),
+            ("Cancel", gtk::ResponseType::Cancel.into()),
+        ]);
 
-    let back: gtk::Button = object(&builder, "back-button");
-    back.connect_clicked(clone!(not_impl_dialog => move |_| {
-        not_impl_dialog.run();
-        not_impl_dialog.hide();
-    }));
+        let response: i32 = gtk::ResponseType::Ok.into();
+        if file_chooser.run() == response {
+            let hash = entry.get_text().unwrap();
+            let data = ipfs::block_get(&hash);
 
-    let forward: gtk::Button = object(&builder, "forward-button");
-    forward.connect_clicked(clone!(not_impl_dialog => move |_| {
-        not_impl_dialog.run();
-        not_impl_dialog.hide();
-    }));
+            let filename = file_chooser.get_filename().expect("Couldn't get filename");
+            let mut file = File::create(&filename).expect("Couldn't save file");
+            // TODO: Implement error handling for file.write_all Result.
+            file.write_all(&data.as_bytes());
+        }
 
-    let fork: gtk::Button = object(&builder, "fork-button");
-    fork.connect_clicked(clone!(not_impl_dialog => move |_| {
-        not_impl_dialog.run();
-        not_impl_dialog.hide();
+        file_chooser.destroy();
     }));
 
     let upload: gtk::Button = object(&builder, "upload-button");
-    upload.connect_clicked(clone!(drawing_area, window => move |_| {
-        // TODO move this to a impl?
+    upload.connect_clicked(clone!(window => move |_| {
+        // TODO: move this to a impl?
         let file_chooser = gtk::FileChooserDialog::new(
             Some("Open File"), Some(&window), gtk::FileChooserAction::Open);
         file_chooser.add_buttons(&[
@@ -193,20 +176,60 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::TextView, windo
 
             let static_str = Box::leak(contents.into_boxed_str());
             let hash = ipfs::block_put(static_str.as_bytes());
-            drawing_area.get_buffer().expect("Couldn't get window").set_text(&hash);
+            println!("DEBUG => Uploaded file. HASH = {:?}", hash);
         }
 
         file_chooser.destroy();
     }));
 
-    let profile: gtk::Button = object(&builder, "profile-button");
+    // ATTENTION: This piece of code was removed temporarily.
+    //Please, do not erase the commented section below.
+    // let not_impl_dialog: gtk::MessageDialog = object(&builder, "not-impl-dialog");
+    /*let profile: gtk::Button = object(&builder, "profile-button");
     profile.connect_clicked(clone!(not_impl_dialog => move |_| {
         not_impl_dialog.run();
         not_impl_dialog.hide();
-    }));
+    }));*/
 }
 
+fn render_element(elem: &Element, ctx: &Context) {
+    match elem {
+        Element::Circle{x, y, r} => {
+            ctx.set_source_rgb(0.5, 0.5, 1.0);
+            ctx.arc(*x as f64, *y as f64, *r as f64, 0.0, 3.14159 * 2.);
+            ctx.fill();
+        }
+        Element::Square{x, y, r} => {
+            ctx.set_source_rgb(0.5, 0.5, 1.0);
+            ctx.rectangle(*x as f64, *y as f64, *r as f64, *r as f64);
+            ctx.fill();
+        }
+    }
+}
 
-fn string_to_static_str(s: String) -> &'static str {
-    Box::leak(s.into_boxed_str())
+pub fn render(drawing_area: &gtk::DrawingArea, doc: Document){
+    println!("DEBUG => drawing document {:?}", doc);
+    let surface = ImageSurface::create(Format::ARgb32, 120, 120)
+        .expect("ERROR: Can't create surface");
+    let ctx = Context::new(&surface);
+    ctx.save(); // save default cairo contect state
+
+    drawing_area.connect_draw(move |_, ctx| {
+        // Clear painting surface
+        ctx.save();
+        ctx.set_source_rgb(1.0, 1.0, 1.0);
+        ctx.set_operator(Operator::Source);
+        ctx.paint();
+        ctx.restore();
+
+        // Draw formality-document
+        for elem in &doc {
+            render_element(&elem, &ctx);
+        }
+
+        Inhibit(false)
+    });
+
+    drawing_area.queue_draw();
+    println!("DEBUG => Formality-document render complete");
 }
