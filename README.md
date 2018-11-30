@@ -27,11 +27,15 @@ so the path is pointing to the IPFS Api root folder
 4. Cargo run
 
 ### Changelog
-v0.1.0:
-    - Basic GUI
-    - IPFS file download in local server
+v0.1.2
+    - Browser now displays an OpenGL context instead of only text
+    - Render formality-document files
 
 v0.1.1
     - Changes in GUI
     - IPFS Download and Upload
     - Moon now uses IPFS server from Infura instead of a local instance
+
+v0.1.0:
+    - Basic GUI
+    - IPFS file download in local server
