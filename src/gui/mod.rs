@@ -12,7 +12,6 @@ use formality_document::document::*;
 use std::fs::File;
 use std::io::prelude::*;
 
-
 // make moving clones into closures more convenient
 macro_rules! clone {
     (@param _) => ( _ );
@@ -177,7 +176,7 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
 
             let static_str = Box::leak(contents.into_boxed_str());
             let hash = ipfs::block_put(static_str.as_bytes());
-            println!("DEBUG: Uploaded file. HASH = {:?}", hash);
+            println!("DEBUG => Uploaded file. HASH = {:?}", hash);
         }
 
         file_chooser.destroy();
@@ -209,7 +208,7 @@ fn render_element(elem: &Element, ctx: &Context) {
 }
 
 pub fn render(drawing_area: &gtk::DrawingArea, doc: Document){
-    println!("DEBUG: drawing document {:?}", doc);
+    println!("DEBUG => drawing document {:?}", doc);
     let surface = ImageSurface::create(Format::ARgb32, 120, 120)
         .expect("ERROR: Can't create surface");
     let ctx = Context::new(&surface);
@@ -232,5 +231,5 @@ pub fn render(drawing_area: &gtk::DrawingArea, doc: Document){
     });
 
     drawing_area.queue_draw();
-    println!("DEBUG: Formality-document render complete");
+    println!("DEBUG => Formality-document render complete");
 }
