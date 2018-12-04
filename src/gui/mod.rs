@@ -46,9 +46,10 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
         Inhibit(false)
     }));
 
-    let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
+    //let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
 
     build_menu_bar(&builder, &window);
+    let drawing_area: gtk::DrawingArea = build_drawing_area(&builder, &window);
     build_address_bar(&builder, &drawing_area, &window);
 
     window.show_all();
@@ -119,6 +120,11 @@ fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
         about_dialog.run();
         about_dialog.hide();
     });
+}
+
+fn build_drawing_area(builder: &gtk::Builder, window: &gtk::ApplicationWindow) -> gtk::DrawingArea {
+    let da: gtk::DrawingArea = object(&builder, "drawingarea1");
+    da
 }
 
 fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow) {
