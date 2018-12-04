@@ -5,6 +5,7 @@ use gtk::prelude::*;
 extern crate gio;
 use gio::prelude::*;
 
+extern crate gdk;
 extern crate glib;
 extern crate cairo;
 

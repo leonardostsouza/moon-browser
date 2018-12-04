@@ -3,6 +3,7 @@
 // interface using GTK
 
 use gtk::prelude::*;
+use gdk::{EventMask, EventType};
 use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
 use cairo::{Context, Format, ImageSurface, Operator};
 
@@ -45,8 +46,6 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
         window.destroy();
         Inhibit(false)
     }));
-
-    //let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
 
     build_menu_bar(&builder, &window);
     let drawing_area: gtk::DrawingArea = build_drawing_area(&builder, &window);
@@ -123,8 +122,38 @@ fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
 }
 
 fn build_drawing_area(builder: &gtk::Builder, window: &gtk::ApplicationWindow) -> gtk::DrawingArea {
-    let da: gtk::DrawingArea = object(&builder, "drawingarea1");
-    da
+    let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
+
+    // allow DrawingArea to receive non default events
+    drawing_area.add_events(EventMask::BUTTON_PRESS_MASK.bits() as i32); //mouse click
+    drawing_area.add_events(EventMask::KEY_PRESS_MASK.bits() as i32); //keyboard
+    drawing_area.set_can_focus(true);
+
+    // Define event handlers
+    // ATTENTION: "draw" event handler is defined in the "render" function
+    // TODO: define "draw" event handler in this function instead of doing it
+    // in "render" function
+    drawing_area.connect_event(clone!(drawing_area => move |_,ev| {
+        match ev.get_event_type() {
+            EventType::ButtonPress => {
+                println!("DEBUG: Event \"ButtonPress\" in DrawingArea received:\n\t==> Coords:{:?} | Button: {:?}",
+                        ev.get_coords().unwrap(),
+                        ev.get_button().unwrap());
+                drawing_area.grab_focus();
+            },
+            EventType::KeyPress => {
+                println!("DEBUG: Event \"KeyPress\" in DrawingArea received:\n\t==> KeyCode: {:?} | KeyVal: {:?}",
+                        ev.get_keycode().unwrap(),
+                        ev.get_keyval().unwrap());
+            },
+            _ => {
+                println!("DEBUG: Event \"{:?}\" in DrawingArea ignored", ev.get_event_type());
+            },
+        }
+        Inhibit(false)
+    }));
+
+    drawing_area
 }
 
 fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow) {
