@@ -3,6 +3,7 @@
 // interface using GTK
 
 use gtk::prelude::*;
+use gdk::{EventMask, EventType};
 use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
 use cairo::{Context, Format, ImageSurface, Operator};
 
@@ -46,9 +47,8 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
         Inhibit(false)
     }));
 
-    let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
-
     build_menu_bar(&builder, &window);
+    let drawing_area: gtk::DrawingArea = build_drawing_area(&builder, &window);
     build_address_bar(&builder, &drawing_area, &window);
 
     window.show_all();
@@ -121,15 +121,52 @@ fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
     });
 }
 
+fn build_drawing_area(builder: &gtk::Builder, window: &gtk::ApplicationWindow) -> gtk::DrawingArea {
+    let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
+
+    // allow DrawingArea to receive non default events
+    drawing_area.add_events(EventMask::BUTTON_PRESS_MASK.bits() as i32); //mouse click
+    drawing_area.add_events(EventMask::KEY_PRESS_MASK.bits() as i32); //keyboard
+    drawing_area.set_can_focus(true);
+
+    // Define event handlers
+    drawing_area.connect_event(clone!(drawing_area => move |_,ev| {
+        match ev.get_event_type() {
+            EventType::ButtonPress => {
+                println!("DEBUG: Event \"ButtonPress\" in DrawingArea received:\n\t==> Coords:{:?} | Button: {:?}",
+                        ev.get_coords().unwrap(),
+                        ev.get_button().unwrap());
+                drawing_area.grab_focus();
+            },
+            EventType::KeyPress => {
+                println!("DEBUG: Event \"KeyPress\" in DrawingArea received:\n\t==> KeyCode: {:?} | KeyVal: {:?}",
+                        ev.get_keycode().unwrap(),
+                        ev.get_keyval().unwrap());
+            },
+            _ => {
+                println!("DEBUG: Event \"{:?}\" in DrawingArea ignored", ev.get_event_type());
+            },
+        }
+        Inhibit(false)
+    }));
+
+    drawing_area
+}
+
 fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow) {
     let entry: gtk::Entry = object(&builder, "address-bar");
-    entry.connect_activate(clone!(drawing_area, entry => move |_| {
+
+    let surface = ImageSurface::create(Format::ARgb32, 120, 120)
+        .expect("ERROR: Can't create surface");
+    let ctx = Context::new(&surface);
+
+    entry.connect_activate(clone!(drawing_area, ctx, entry => move |_| {
         let hash = entry.get_text().unwrap();
         println!("DEBUG => Address bar HASH: {:?}", hash);
         let data = ipfs::block_get(&hash);
         println!("DEBUG => Request done. DATA: {:?}", data);
         let doc: Document = serde_json::from_str(&data).unwrap();
-        render(&drawing_area, doc);
+        render(&drawing_area, &ctx, doc);
     }));
 
     let download: gtk::Button = object(&builder, "download-button");
@@ -175,6 +212,7 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
             file.read_to_string(&mut contents).expect("Error while reading file");
 
             let static_str = Box::leak(contents.into_boxed_str());
+
             let hash = ipfs::block_put(static_str.as_bytes());
             println!("DEBUG => Uploaded file. HASH = {:?}", hash);
         }
@@ -207,13 +245,10 @@ fn render_element(elem: &Element, ctx: &Context) {
     }
 }
 
-pub fn render(drawing_area: &gtk::DrawingArea, doc: Document){
+pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, doc: Document){
     println!("DEBUG => drawing document {:?}", doc);
-    let surface = ImageSurface::create(Format::ARgb32, 120, 120)
-        .expect("ERROR: Can't create surface");
-    let ctx = Context::new(&surface);
-    ctx.save(); // save default cairo contect state
 
+    // TODO: Move this handler definition to "build_drawing_area" function?
     drawing_area.connect_draw(move |_, ctx| {
         // Clear painting surface
         ctx.save();
