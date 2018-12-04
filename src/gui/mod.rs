@@ -130,9 +130,6 @@ fn build_drawing_area(builder: &gtk::Builder, window: &gtk::ApplicationWindow) -
     drawing_area.set_can_focus(true);
 
     // Define event handlers
-    // ATTENTION: "draw" event handler is defined in the "render" function
-    // TODO: define "draw" event handler in this function instead of doing it
-    // in "render" function
     drawing_area.connect_event(clone!(drawing_area => move |_,ev| {
         match ev.get_event_type() {
             EventType::ButtonPress => {
@@ -158,13 +155,18 @@ fn build_drawing_area(builder: &gtk::Builder, window: &gtk::ApplicationWindow) -
 
 fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow) {
     let entry: gtk::Entry = object(&builder, "address-bar");
-    entry.connect_activate(clone!(drawing_area, entry => move |_| {
+
+    let surface = ImageSurface::create(Format::ARgb32, 120, 120)
+        .expect("ERROR: Can't create surface");
+    let ctx = Context::new(&surface);
+
+    entry.connect_activate(clone!(drawing_area, ctx, entry => move |_| {
         let hash = entry.get_text().unwrap();
         println!("DEBUG => Address bar HASH: {:?}", hash);
         let data = ipfs::block_get(&hash);
         println!("DEBUG => Request done. DATA: {:?}", data);
         let doc: Document = serde_json::from_str(&data).unwrap();
-        render(&drawing_area, doc);
+        render(&drawing_area, &ctx, doc);
     }));
 
     let download: gtk::Button = object(&builder, "download-button");
@@ -210,6 +212,7 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
             file.read_to_string(&mut contents).expect("Error while reading file");
 
             let static_str = Box::leak(contents.into_boxed_str());
+
             let hash = ipfs::block_put(static_str.as_bytes());
             println!("DEBUG => Uploaded file. HASH = {:?}", hash);
         }
@@ -242,13 +245,10 @@ fn render_element(elem: &Element, ctx: &Context) {
     }
 }
 
-pub fn render(drawing_area: &gtk::DrawingArea, doc: Document){
+pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, doc: Document){
     println!("DEBUG => drawing document {:?}", doc);
-    let surface = ImageSurface::create(Format::ARgb32, 120, 120)
-        .expect("ERROR: Can't create surface");
-    let ctx = Context::new(&surface);
-    ctx.save(); // save default cairo contect state
 
+    // TODO: Move this handler definition to "build_drawing_area" function?
     drawing_area.connect_draw(move |_, ctx| {
         // Clear painting surface
         ctx.save();
