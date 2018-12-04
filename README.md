@@ -27,6 +27,10 @@ so the path is pointing to the IPFS Api root folder
 4. Cargo run
 
 ### Changelog
+v0.1.3
+   * DrawingArea can now handle mouse and keyboard events
+   * Minor performance improvements
+
 v0.1.2
    * Browser now displays an OpenGL context instead of only text
    * Render formality-document files
