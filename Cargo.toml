@@ -12,14 +12,14 @@ gtk = "^0"
 cairo-rs = { version = "^0", features = ["png"] }
 
 # IPFS API
-ipfsapi = { path = "../rust-ipfs-api" }
+ipfsapi = { git = "https://github.com/leonardostsouza/rust-ipfs-api.git" }
 
 # Ethereum Interaction
 #web3 = { git = "https://github.com/tomusdrw/rust-web3" }
 
 # Formality
 formality = "0.1.10"
-formality-document = {path = "../formality-document"}
+formality-document = {git = "https://github.com/MaiaVictor/formality-document.git"}
 
 # Utilities
 serde = "^1.0.80"

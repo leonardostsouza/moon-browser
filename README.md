@@ -17,14 +17,7 @@ In the same way Operating Systems changed forever the way we deal with computers
 
 ### How to run Moon browser
 1. Download this repository to get Moon source code
-2. Download [this](https://github.com/leonardostsouza/rust-ipfs-api) repository to get the IPFS Api source code
-3. In the file Cargo.toml from the Moon repository, change the line
-```
-ipfsapi = { path = "../rust-ipfs-api" }
-```
-so the path is pointing to the IPFS Api root folder
-
-4. Cargo run
+2. 'Cargo run' to build and run Moon Browser
 
 ### Changelog
 v0.1.3
