@@ -17,14 +17,6 @@ use formality_document::document::*;
 mod ipfs;
 mod gui;
 
-/*extern crate moon_browser as mb;
-use mb::gio::prelude::*;
-use mb::gtk::prelude::*;
-
-use mb::formality_document::document::*;
-use mb::gui;
-
-use std::env::args;*/
 use std::env::args;
 
 fn main() {
