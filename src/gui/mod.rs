@@ -7,6 +7,7 @@ use gdk::{EventMask, EventType};
 use gtk::{ApplicationWindow, Builder, MenuItemExt, Object};
 use cairo::{Context, Format, ImageSurface, Operator};
 
+use math::*;
 use ipfs;
 use formality_document::document::*;
 
@@ -124,31 +125,10 @@ fn build_menu_bar(builder: &gtk::Builder, window: &gtk::ApplicationWindow) {
 fn build_drawing_area(builder: &gtk::Builder, window: &gtk::ApplicationWindow) -> gtk::DrawingArea {
     let drawing_area: gtk::DrawingArea = object(&builder, "drawingarea1");
 
-    // allow DrawingArea to receive non default events
+    // allow DrawingArea to receive non-default events
     drawing_area.add_events(EventMask::BUTTON_PRESS_MASK.bits() as i32); //mouse click
     drawing_area.add_events(EventMask::KEY_PRESS_MASK.bits() as i32); //keyboard
     drawing_area.set_can_focus(true);
-
-    // Define event handlers
-    drawing_area.connect_event(clone!(drawing_area => move |_,ev| {
-        match ev.get_event_type() {
-            EventType::ButtonPress => {
-                println!("DEBUG: Event \"ButtonPress\" in DrawingArea received:\n\t==> Coords:{:?} | Button: {:?}",
-                        ev.get_coords().unwrap(),
-                        ev.get_button().unwrap());
-                drawing_area.grab_focus();
-            },
-            EventType::KeyPress => {
-                println!("DEBUG: Event \"KeyPress\" in DrawingArea received:\n\t==> KeyCode: {:?} | KeyVal: {:?}",
-                        ev.get_keycode().unwrap(),
-                        ev.get_keyval().unwrap());
-            },
-            _ => {
-                println!("DEBUG: Event \"{:?}\" in DrawingArea ignored", ev.get_event_type());
-            },
-        }
-        Inhibit(false)
-    }));
 
     drawing_area
 }
@@ -230,11 +210,21 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
     }));*/
 }
 
+// Clear a Cairo Context
+fn clear(ctx: &cairo::Context) {
+    ctx.save();
+    ctx.set_source_rgb(1.0, 1.0, 1.0);
+    ctx.set_operator(Operator::Source);
+    ctx.paint();
+    ctx.restore();
+}
+
+// Render a single element from a formality_document
 fn render_element(elem: &Element, ctx: &Context) {
     match elem {
         Element::Circle{x, y, r} => {
             ctx.set_source_rgb(0.5, 0.5, 1.0);
-            ctx.arc(*x as f64, *y as f64, *r as f64, 0.0, 3.14159 * 2.);
+            ctx.arc(*x as f64, *y as f64, *r as f64, 0.0, PI * 2.);
             ctx.fill();
         }
         Element::Square{x, y, r} => {
@@ -242,28 +232,66 @@ fn render_element(elem: &Element, ctx: &Context) {
             ctx.rectangle(*x as f64, *y as f64, *r as f64, *r as f64);
             ctx.fill();
         }
+        _ => {/*Ignore*/}
     }
 }
 
+// Maps mouse click coordinates to an element in Cairo Context
+fn click_map(x: f64, y: f64, doc: &Document) -> Option<&Element>{
+    for elem in doc {
+        if is_inside(x, y, elem){
+            return Some(elem);
+        }
+    }
+    None
+}
+
+// Renders a formality_document in a Cairo Context
 pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, doc: Document){
     println!("DEBUG => drawing document {:?}", doc);
+    //let doc_clone = doc.to_vec();
 
-    // TODO: Move this handler definition to "build_drawing_area" function?
-    drawing_area.connect_draw(move |_, ctx| {
-        // Clear painting surface
-        ctx.save();
-        ctx.set_source_rgb(1.0, 1.0, 1.0);
-        ctx.set_operator(Operator::Source);
-        ctx.paint();
-        ctx.restore();
+    // Define event handlers
+    drawing_area.connect_event(clone!(drawing_area, doc => move |_,ev| {
+        match ev.get_event_type() {
+            EventType::ButtonPress => {
+                println!("DEBUG: Event \"ButtonPress\" in DrawingArea received:\n\t==> Coords:{:?} | Button: {:?}",
+                        ev.get_coords().unwrap(),
+                        ev.get_button().unwrap());
 
+                let x = ev.get_coords().unwrap().0;
+                let y = ev.get_coords().unwrap().1;
+
+                match click_map(x, y, &doc) {
+                    Some(element) => {
+                        println!("DEBUG: Clicked on element {:?}", *element);
+                    }
+                    None => {
+                        println!("DEBUG: Didn't click any element");
+                    }
+                }
+                drawing_area.grab_focus();
+            },
+            EventType::KeyPress => {
+                println!("DEBUG: Event \"KeyPress\" in DrawingArea received:\n\t==> KeyCode: {:?} | KeyVal: {:?}",
+                        ev.get_keycode().unwrap(),
+                        ev.get_keyval().unwrap());
+            },
+            _ => {
+                println!("DEBUG: Event \"{:?}\" in DrawingArea ignored", ev.get_event_type());
+            },
+        }
+        Inhibit(false)
+    }));
+
+    drawing_area.connect_draw(clone!(doc => move |_, ctx| {
+        clear(&ctx);
         // Draw formality-document
         for elem in &doc {
             render_element(&elem, &ctx);
         }
-
         Inhibit(false)
-    });
+    }));
 
     drawing_area.queue_draw();
     println!("DEBUG => Formality-document render complete");

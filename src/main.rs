@@ -14,6 +14,7 @@ extern crate serde_json;
 extern crate formality_document;
 use formality_document::document::*;
 
+mod math;
 mod ipfs;
 mod gui;
 
