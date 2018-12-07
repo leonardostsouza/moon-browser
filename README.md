@@ -21,7 +21,7 @@ In the same way Operating Systems changed forever the way we deal with computers
 
 ### Changelog
 v0.1.3
-   * DrawingArea can now handle mouse and keyboard events
+   * DrawingArea can now detect and handle mouse and keyboard events
    * Minor performance improvements
 
 v0.1.2
