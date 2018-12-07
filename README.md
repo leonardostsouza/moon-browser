@@ -20,11 +20,8 @@ In the same way Operating Systems changed forever the way we deal with computers
 2. 'Cargo run' to build and run Moon Browser
 
 ### Changelog
-v0.1.4
-   * Mouse clicks map to shapes rendered in DrawingArea
-
 v0.1.3
-   * DrawingArea can now handle mouse and keyboard events
+   * DrawingArea can now detect and handle mouse and keyboard events
    * Minor performance improvements
 
 v0.1.2

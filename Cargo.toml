@@ -18,7 +18,7 @@ ipfsapi = { git = "https://github.com/leonardostsouza/rust-ipfs-api.git" }
 #web3 = { git = "https://github.com/tomusdrw/rust-web3" }
 
 # Formality
-formality = "0.1.10"
+formality = "^0.1.10"
 formality-document = {git = "https://github.com/MaiaVictor/formality-document.git"}
 
 # Utilities
