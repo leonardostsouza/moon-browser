@@ -9,6 +9,7 @@ use cairo::{Context, Format, ImageSurface, Operator};
 
 use math::*;
 use ipfs;
+use app_api::App;
 use formality_document::document::*;
 
 use std::fs::File;
@@ -145,8 +146,10 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
         println!("DEBUG => Address bar HASH: {:?}", hash);
         let data = ipfs::block_get(&hash);
         println!("DEBUG => Request done. DATA: {:?}", data);
-        let doc: Document = serde_json::from_str(&data).unwrap();
-        render(&drawing_area, &ctx, doc);
+        //let doc: Document = serde_json::from_str(&data).unwrap();
+        //render(&drawing_area, &ctx, doc);
+        let app: App = App::new(Some(data.as_bytes())); // handle "No Defs"?
+        render(&drawing_area, &ctx, app);
     }));
 
     let download: gtk::Button = object(&builder, "download-button");
@@ -247,9 +250,9 @@ fn click_map(x: f64, y: f64, doc: &Document) -> Option<&Element>{
 }
 
 // Renders a formality_document in a Cairo Context
-pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, doc: Document){
+pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, app: App){
+    let doc = app.doc();
     println!("DEBUG => drawing document {:?}", doc);
-    //let doc_clone = doc.to_vec();
 
     // Define event handlers
     drawing_area.connect_event(clone!(drawing_area, doc => move |_,ev| {

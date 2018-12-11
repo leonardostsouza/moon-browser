@@ -16,8 +16,10 @@ use formality_document::document::*;
 
 mod math;
 mod ipfs;
+mod app_api;
 mod gui;
 
+use app_api::App;
 use std::env::args;
 
 fn main() {

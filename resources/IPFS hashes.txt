@@ -8,3 +8,7 @@ Hello, my ragtime gal!: QmQVLTNJxJgZVKSTj4tKapVq6GWHg1aHdQ6RQXxNT5LHGE
 Circle: QmQkZMvTNjRzYEjzi5oHCbaWjTGqvVrue164vxMjwmbRvG
 Square: QmfNLfUaD2iSSxVgYX2tiEry5hNHdvWwX9RYMN39jF3ekS
 Circle and Square: QmWV7W2oSGD87XbqW3eLjpkcQxjuVKdRA99h6MhAzkXQca
+
+* Formality Apps
+Demo App: QmeA1m5zq4L5sta1JPD6WQHaFr3kt4y36uVbZuj8nrUCQK
+Demo Defs: QmPmvx6Z8893LjX8uHPoUUEGj6fNQp9VAb8TZ4TADsD5EX
