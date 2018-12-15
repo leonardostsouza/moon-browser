@@ -10,10 +10,12 @@ use cairo::{Context, Format, ImageSurface, Operator};
 use math::*;
 use ipfs;
 use app_api::App;
-use formality_document::document::*;
+use formality_document::document::{Document, Element};
+use formality_document::formality::term::{Defs, Term};
 
 use std::fs::File;
 use std::io::prelude::*;
+use std::sync::Mutex;
 
 // make moving clones into closures more convenient
 macro_rules! clone {
@@ -37,7 +39,7 @@ fn object<T: IsA<Object>>(builder: &gtk::Builder, name: &str) -> T {
     builder.get_object(name).expect(&format!("ERROR: Failed to get {}", name)[..])
 }
 
-pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
+pub fn build_ui(application: &gtk::Application, app: &'static Mutex<App>, width: i32, height: i32) {
     let glade_src = include_str!("gui.glade");
     let builder = Builder::new_from_string(glade_src);
 
@@ -51,7 +53,7 @@ pub fn build_ui(application: &gtk::Application, width: i32, height: i32) {
 
     build_menu_bar(&builder, &window);
     let drawing_area: gtk::DrawingArea = build_drawing_area(&builder, &window);
-    build_address_bar(&builder, &drawing_area, &window);
+    build_address_bar(&builder, &drawing_area, &window, app);
 
     window.show_all();
 }
@@ -134,7 +136,7 @@ fn build_drawing_area(builder: &gtk::Builder, window: &gtk::ApplicationWindow) -
     drawing_area
 }
 
-fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow) {
+fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, window: &gtk::ApplicationWindow, app: &'static Mutex<App>) {
     let entry: gtk::Entry = object(&builder, "address-bar");
 
     let surface = ImageSurface::create(Format::ARgb32, 120, 120)
@@ -146,9 +148,11 @@ fn build_address_bar(builder: &gtk::Builder, drawing_area: &gtk::DrawingArea, wi
         println!("DEBUG => Address bar HASH: {:?}", hash);
         let data = ipfs::block_get(&hash);
         println!("DEBUG => Request done. DATA: {:?}", data);
-        //let doc: Document = serde_json::from_str(&data).unwrap();
-        //render(&drawing_area, &ctx, doc);
-        let app: App = App::new(Some(data.as_bytes())); // handle "No Defs"?
+        //Update values on App struct
+        {
+            let mut app_ref = app.lock().unwrap();
+            app_ref.copy(App::new(Some(data.as_bytes())));
+        }
         render(&drawing_area, &ctx, app);
     }));
 
@@ -250,12 +254,15 @@ fn click_map(x: f64, y: f64, doc: &Document) -> Option<&Element>{
 }
 
 // Renders a formality_document in a Cairo Context
-pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, app: App){
-    let doc = app.doc();
-    println!("DEBUG => drawing document {:?}", doc);
+pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, app: &'static Mutex<App>){
+    let mut doc: Document;
+    {
+        doc = app.lock().unwrap().doc();
+        println!("DEBUG => drawing document {:?}", doc);
+    }
 
     // Define event handlers
-    drawing_area.connect_event(clone!(drawing_area, doc => move |_,ev| {
+    drawing_area.connect_event(clone!(ctx, doc, drawing_area => move |_,ev| {
         match ev.get_event_type() {
             EventType::ButtonPress => {
                 println!("DEBUG: Event \"ButtonPress\" in DrawingArea received:\n\t==> Coords:{:?} | Button: {:?}",
@@ -268,6 +275,25 @@ pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, app: App){
                 match click_map(x, y, &doc) {
                     Some(element) => {
                         println!("DEBUG: Clicked on element {:?}", *element);
+                        let mut doc_c: Document;
+                        {
+                            let mut app_ref = app.lock().unwrap();
+                            app_ref.apply();
+                            doc_c = app_ref.doc();
+                        }
+                        let new_ctx = ctx.clone();
+
+                        drawing_area.connect_draw(clone!(doc_c => move |_, new_ctx| {
+                            clear(&new_ctx);
+                            // Draw formality-document
+                            for elem in &doc_c {
+                                render_element(&elem, &new_ctx);
+                            }
+                            Inhibit(false)
+                        }));
+                        println!("DEBUG: Rendering new doc: {:?}", doc_c);
+                        drawing_area.queue_draw();
+
                     }
                     None => {
                         println!("DEBUG: Didn't click any element");
