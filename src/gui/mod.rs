@@ -272,26 +272,28 @@ pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, app: &'stat
                 let x = ev.get_coords().unwrap().0;
                 let y = ev.get_coords().unwrap().1;
 
-                match click_map(x, y, &doc) {
+                let mut new_doc = {app.lock().unwrap().doc()};
+
+                match click_map(x, y, &new_doc) {
                     Some(element) => {
                         println!("DEBUG: Clicked on element {:?}", *element);
-                        let mut doc_c: Document;
+                        let mut doc: Document;
                         {
                             let mut app_ref = app.lock().unwrap();
                             app_ref.apply();
-                            doc_c = app_ref.doc();
+                            doc = app_ref.doc();
                         }
                         let new_ctx = ctx.clone();
 
-                        drawing_area.connect_draw(clone!(doc_c => move |_, new_ctx| {
+                        drawing_area.connect_draw(clone!(doc => move |_, new_ctx| {
                             clear(&new_ctx);
                             // Draw formality-document
-                            for elem in &doc_c {
+                            for elem in &doc {
                                 render_element(&elem, &new_ctx);
                             }
                             Inhibit(false)
                         }));
-                        println!("DEBUG: Rendering new doc: {:?}", doc_c);
+                        println!("DEBUG: Rendering new doc: {:?}", doc);
                         drawing_area.queue_draw();
 
                     }
