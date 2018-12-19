@@ -12,21 +12,17 @@ pub struct App {
 }
 
 impl App {
+    // Creates a new App intance based on formality definitions
+    // TODO: Receive an AppSpec instead of simple definitions
     pub fn new(raw_defs: Option<&[u8]>) -> App { // Remove "Option"?
-        let mut new_app =
-        App {
-            inistate:   Term::Set,
-            transact:   Term::Set,
-            render:     Term::Set,
-            curr_state: Term::Set,
-            defs:       Some(build_defs(raw_defs))
-        };
+        let mut new_app = App::blank();
+        new_app.defs = Some(build_defs(raw_defs));
 
-        // Update App instance with definitions
         let defs = &new_app.clone().defs.unwrap().clone();
         let get = |name| get_term(name, defs); // convenience to get terms
         let apply = |func, args| apply(func, args, defs); // convenience to apply terms
         let app = get(b"demo_app"); //Should it be stored?
+
         new_app.inistate    = apply(get(b"get_app_local_inistate"), vec![app.clone()]);
         new_app.transact    = apply(get(b"get_app_local_transact"), vec![app.clone()]);
         new_app.render      = apply(get(b"get_app_render"), vec![app.clone()]);
@@ -34,6 +30,7 @@ impl App {
         new_app
     }
 
+    // Returns a blank App instance
     pub fn blank() -> App {
         let blank_app: App = App {
             inistate:   Term::Set,
@@ -45,14 +42,12 @@ impl App {
         blank_app
     }
 
+    // Copy values from another struct instance
     pub fn copy(&mut self, other: App){
-        self.inistate    = other.inistate;
-        self.transact    = other.transact;
-        self.render      = other.render;
-        self.curr_state  = other.curr_state;
-        self.defs        = other.defs;
+        *self = App {.. other};
     }
 
+    // TODO: Implement a generic App::apply()
     pub fn apply(&mut self) {
         // local transaction
         match &self.defs {
@@ -61,7 +56,7 @@ impl App {
                 let get = |name| get_term(name, &defs); // convenience to get terms
                 let apply = |func, args| apply(func, args, &defs); // convenience to apply terms
 
-                let local_event = get(b"demo_local_event");
+                let local_event = get(b"demo_local_event"); //TODO: Implement generic apply function
 
                 let new_state = apply(self.transact.clone(), vec![local_event.clone(), self.curr_state.clone()]);
                 self.curr_state = new_state;
@@ -71,7 +66,7 @@ impl App {
 
     }
 
-    // export App as Formality Terms
+    // export App as Formality Document Terms
     pub fn f_doc(&mut self) -> Term {
         let term: Term;
         match &self.defs {
