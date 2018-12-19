@@ -253,16 +253,22 @@ fn click_map(x: f64, y: f64, doc: &Document) -> Option<&Element>{
     None
 }
 
+fn draw(ctx: &cairo::Context, doc: &Document) -> gtk::Inhibit {
+    clear(ctx);
+    for elem in doc {
+        render_element(elem, ctx);
+    }
+    Inhibit(false)
+}
 // Renders a formality_document in a Cairo Context
 pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, app: &'static Mutex<App>){
-    let mut doc: Document;
-    {
-        doc = app.lock().unwrap().doc();
-        println!("DEBUG => drawing document {:?}", doc);
-    }
+    let mut doc: Document = {
+        app.lock().unwrap().doc()
+    };
+    println!("DEBUG => drawing document {:?}", doc);
 
     // Define event handlers
-    drawing_area.connect_event(clone!(ctx, doc, drawing_area => move |_,ev| {
+    drawing_area.connect_event(clone!(ctx, drawing_area => move |_,ev| {
         match ev.get_event_type() {
             EventType::ButtonPress => {
                 println!("DEBUG: Event \"ButtonPress\" in DrawingArea received:\n\t==> Coords:{:?} | Button: {:?}",
@@ -272,26 +278,20 @@ pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, app: &'stat
                 let x = ev.get_coords().unwrap().0;
                 let y = ev.get_coords().unwrap().1;
 
-                let mut new_doc = {app.lock().unwrap().doc()};
+                let mut doc = {app.lock().unwrap().doc()};
 
-                match click_map(x, y, &new_doc) {
+                match click_map(x, y, &doc) {
                     Some(element) => {
                         println!("DEBUG: Clicked on element {:?}", *element);
-                        let mut doc: Document;
-                        {
+                        let mut new_doc: Document = {
                             let mut app_ref = app.lock().unwrap();
                             app_ref.apply();
-                            doc = app_ref.doc();
-                        }
-                        let new_ctx = ctx.clone();
+                            app_ref.doc()
+                        };
 
-                        drawing_area.connect_draw(clone!(doc => move |_, new_ctx| {
-                            clear(&new_ctx);
-                            // Draw formality-document
-                            for elem in &doc {
-                                render_element(&elem, &new_ctx);
-                            }
-                            Inhibit(false)
+                        // Update drawing function with new document
+                        drawing_area.connect_draw(clone!(new_doc => move |_, ctx| {
+                            draw(&ctx, &new_doc)
                         }));
                         println!("DEBUG: Rendering new doc: {:?}", doc);
                         drawing_area.queue_draw();
@@ -316,12 +316,7 @@ pub fn render(drawing_area: &gtk::DrawingArea, ctx: &cairo::Context, app: &'stat
     }));
 
     drawing_area.connect_draw(clone!(doc => move |_, ctx| {
-        clear(&ctx);
-        // Draw formality-document
-        for elem in &doc {
-            render_element(&elem, &ctx);
-        }
-        Inhibit(false)
+        draw(&ctx, &doc)
     }));
 
     drawing_area.queue_draw();
